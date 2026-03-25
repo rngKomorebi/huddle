@@ -107,10 +107,14 @@ tfoot tr{border-top:2px solid #e2e8f0}
 .leg-dot{width:13px;height:13px;border-radius:3px;border:1.5px solid}
 .leg-dot.av{background:#bbf7d0;border-color:#4ade80}
 .leg-dot.mb{background:#fef08a;border-color:#facc15}
-.leg-dot.un{background:#fecaca;border-color:#fca5a5}
 .leg-dot.no{background:#f1f5f9;border-color:#e2e8f0}
 
 .actions-row{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+.modal-bg{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);padding:16px}
+.modal-box{background:#fff;border-radius:16px;padding:28px 28px 22px;max-width:820px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal-label{display:block;font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#64748b;margin-bottom:6px}
+.modal-name-input{border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 13px;font-size:.97rem;font-weight:600;outline:none;transition:border-color .15s;width:100%}
+.modal-name-input:focus{border-color:#4f46e5}
 
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(14px);background:#1e293b;color:#fff;padding:9px 18px;border-radius:22px;font-size:.82rem;font-weight:500;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -144,45 +148,7 @@ tfoot tr{border-top:2px solid #e2e8f0}
   <main>
 
     <div class="card">
-      <div class="card-title">Step 1 &mdash; Pick Dates &amp; Time Range</div>
-      <div class="setup-row">
-        <div>
-          <div class="cal-wrap">
-            <div class="cal-nav">
-              <button id="cal-prev">&#8249;</button>
-              <span class="cal-month" id="cal-month-label"></span>
-              <button id="cal-next">&#8250;</button>
-            </div>
-            <div class="cal-grid" id="cal-grid"></div>
-            <div class="cal-actions">
-              <button class="btn btn-ghost btn-sm" id="cal-this-week">This week</button>
-              <button class="btn btn-ghost btn-sm" id="cal-next-week">Next week</button>
-              <button class="btn btn-danger btn-sm" id="cal-clear">Clear</button>
-            </div>
-            <div style="padding:0 10px 10px">
-              <div class="sel-dates-label" id="sel-label">No dates selected</div>
-              <div class="chip-list" id="date-chips"></div>
-            </div>
-          </div>
-        </div>
-        <div class="hour-section">
-          <h3>Time Slots</h3>
-          <div class="hour-quick">
-            <button class="btn btn-ghost btn-sm" id="h-all">All hours</button>
-            <button class="btn btn-ghost btn-sm" id="h-biz">Business (9-5)</button>
-            <button class="btn btn-ghost btn-sm" id="h-eve">Evening (5-10)</button>
-            <button class="btn btn-ghost btn-sm" id="h-none">None</button>
-          </div>
-          <div class="hour-grid" id="hour-grid"></div>
-          <div class="add-row">
-            <button class="btn btn-primary" id="btn-add-slots" disabled>+ Add to poll</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">Step 2 &mdash; Enter Your Name</div>
+      <div class="card-title">Enter Your Name</div>
       <div class="name-row">
         <input type="text" id="name-input" placeholder="Your name…" maxlength="40"/>
         <button class="btn btn-primary" id="btn-name">Set name</button>
@@ -192,9 +158,9 @@ tfoot tr{border-top:2px solid #e2e8f0}
     </div>
 
     <div class="card">
-      <div class="card-title">Step 3 &mdash; Availability <span id="respondents-label" style="font-weight:400;text-transform:none;letter-spacing:0;color:#94a3b8;font-size:.77rem"></span></div>
+      <div class="card-title">Availability <span id="respondents-label" style="font-weight:400;text-transform:none;letter-spacing:0;color:#94a3b8;font-size:.77rem"></span></div>
       <div class="table-outer" id="table-outer">
-        <div style="text-align:center;padding:38px;color:#94a3b8">Add dates &amp; time slots in Step 1 to get started.</div>
+        <div style="text-align:center;padding:38px;color:#94a3b8">No time slots configured for this poll.</div>
       </div>
       <div class="actions-row">
         <button class="btn btn-ghost btn-sm" id="btn-copy">&#128279; Copy share link</button>
@@ -206,13 +172,60 @@ tfoot tr{border-top:2px solid #e2e8f0}
         <span style="font-size:.71rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;margin-right:3px">Legend</span>
         <div class="leg-item"><div class="leg-dot av"></div><span>Available</span></div>
         <div class="leg-item"><div class="leg-dot mb"></div><span>Maybe</span></div>
-        <div class="leg-item"><div class="leg-dot un"></div><span>Unavailable</span></div>
         <div class="leg-item"><div class="leg-dot no"></div><span>No response</span></div>
         <span style="color:#94a3b8;font-size:.75rem;margin-left:4px">Drag to paint cells</span>
       </div>
     </div>
 
   </main>
+</div>
+
+<div id="create-modal" class="modal-bg" style="display:none">
+  <div class="modal-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <h2 style="font-size:1.15rem;font-weight:800;color:#1a1a2e">New Poll</h2>
+      <button class="btn btn-ghost btn-sm" id="modal-close">&times;</button>
+    </div>
+    <div style="margin-bottom:16px">
+      <label class="modal-label" for="modal-title-input">Poll name</label>
+      <input class="modal-name-input" id="modal-title-input" type="text" placeholder="e.g. Team lunch" maxlength="80" spellcheck="false"/>
+    </div>
+    <div class="setup-row">
+      <div>
+        <div class="cal-wrap">
+          <div class="cal-nav">
+            <button id="cal-prev">&#8249;</button>
+            <span class="cal-month" id="cal-month-label"></span>
+            <button id="cal-next">&#8250;</button>
+          </div>
+          <div class="cal-grid" id="cal-grid"></div>
+          <div class="cal-actions">
+            <button class="btn btn-ghost btn-sm" id="cal-this-week">This week</button>
+            <button class="btn btn-ghost btn-sm" id="cal-next-week">Next week</button>
+            <button class="btn btn-danger btn-sm" id="cal-clear">Clear</button>
+          </div>
+          <div style="padding:0 10px 10px">
+            <div class="sel-dates-label" id="sel-label">No dates selected</div>
+            <div class="chip-list" id="date-chips"></div>
+          </div>
+        </div>
+      </div>
+      <div class="hour-section">
+        <h3>Time Slots</h3>
+        <div class="hour-quick">
+          <button class="btn btn-ghost btn-sm" id="h-all">All hours</button>
+          <button class="btn btn-ghost btn-sm" id="h-biz">Business (9-5)</button>
+          <button class="btn btn-ghost btn-sm" id="h-eve">Evening (5-10)</button>
+          <button class="btn btn-ghost btn-sm" id="h-none">None</button>
+        </div>
+        <div class="hour-grid" id="hour-grid"></div>
+        <div class="add-row">
+          <button class="btn btn-ghost btn-sm" id="modal-cancel">Cancel</button>
+          <button class="btn btn-primary btn-lg" id="btn-create-poll" disabled>Create Poll</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="toast"></div>
@@ -232,8 +245,8 @@ const ALL_HOURS = [
 const HOUR_ORDER = ALL_HOURS.map(h => h.v);
 const BIZ = ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
 const EVE = ['17:00','18:00','19:00','20:00','21:00','22:00'];
-const CYCLE = ['none','available','maybe','unavailable'];
-const DOT_COLOR = {none:'#e2e8f0',available:'#4ade80',maybe:'#facc15',unavailable:'#fca5a5'};
+const CYCLE = ['none','available','maybe'];
+const DOT_COLOR = {none:'#e2e8f0',available:'#4ade80',maybe:'#facc15'};
 const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const STORE_KEY = 'huddle_polls';
 
@@ -320,12 +333,43 @@ function deletePoll(id) {
 }
 
 document.getElementById('btn-new-poll').addEventListener('click', function() {
-  const title = prompt('Poll name:');
-  if (title === null) return;
+  pendingDates.clear();
+  pendingHours = new Set(BIZ);
+  { const t = new Date(); calYear = t.getFullYear(); calMonth = t.getMonth(); }
+  document.getElementById('modal-title-input').value = '';
+  buildCalendar();
+  buildHourGrid();
+  updateAddBtn();
+  document.getElementById('create-modal').style.display = 'flex';
+  setTimeout(function(){ document.getElementById('modal-title-input').focus(); }, 50);
+});
+
+function closeModal() {
+  document.getElementById('create-modal').style.display = 'none';
+}
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('modal-cancel').addEventListener('click', closeModal);
+document.getElementById('create-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+document.getElementById('modal-title-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeModal();
+});
+document.getElementById('btn-create-poll').addEventListener('click', function() {
+  if (pendingDates.size === 0 || pendingHours.size === 0) return;
+  const title = document.getElementById('modal-title-input').value.trim() || 'New poll';
   const id = genId();
   const polls = loadAll();
-  polls[id] = { title: title.trim() || 'New poll', dates:[], hours:[], respondents:[], responses:{}, createdAt:Date.now() };
+  polls[id] = {
+    title,
+    dates: [...pendingDates].sort(),
+    hours: [...pendingHours].sort(function(a,b){ return HOUR_ORDER.indexOf(a) - HOUR_ORDER.indexOf(b); }),
+    respondents: [],
+    responses: {},
+    createdAt: Date.now()
+  };
   saveAll(polls);
+  closeModal();
   openPoll(id);
 });
 
@@ -383,12 +427,6 @@ function showPoll() {
   document.title = (state.title || 'New poll') + ' — Huddle';
 
   document.getElementById('active-badge').textContent = '';
-  pendingDates.clear();
-  pendingHours = new Set(BIZ);
-
-  buildCalendar();
-  buildHourGrid();
-  updateAddBtn();
   renderTable();
 }
 
@@ -519,18 +557,11 @@ document.getElementById('h-none').addEventListener('click', function(){ pendingH
 
 function updateAddBtn() {
   const n = pendingDates.size * pendingHours.size;
-  const btn = document.getElementById('btn-add-slots');
-  btn.disabled = n===0;
-  btn.textContent = n>0 ? '+ Add '+n+' slot'+(n===1?'':'s')+' to poll' : '+ Add to poll';
+  const btn = document.getElementById('btn-create-poll');
+  if (!btn) return;
+  btn.disabled = n === 0;
+  btn.textContent = n > 0 ? 'Create Poll (' + n + ' slot' + (n===1?'':'s') + ')' : 'Create Poll';
 }
-document.getElementById('btn-add-slots').addEventListener('click', function() {
-  if (!state || pendingDates.size===0 || pendingHours.size===0) return;
-  state.dates = sortedUnique([...state.dates,...pendingDates]);
-  state.hours = [...new Set([...state.hours,...pendingHours])].sort((a,b)=>HOUR_ORDER.indexOf(a)-HOUR_ORDER.indexOf(b));
-  pendingDates.clear();
-  saveCurrent(); buildCalendar(); updateAddBtn(); renderTable();
-  showToast('Slots added!');
-});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NAME
@@ -564,12 +595,10 @@ function heatBg(d,h) {
   if (!total) return '#f8fafc';
   const av = state.respondents.filter(n=>getCell(n,d,h)==='available').length;
   const mb = state.respondents.filter(n=>getCell(n,d,h)==='maybe').length;
-  const un = state.respondents.filter(n=>getCell(n,d,h)==='unavailable').length;
-  if (!av&&!mb&&!un) return '#f8fafc';
+  if (!av&&!mb) return '#f8fafc';
   if (av===total) return '#bbf7d0';
-  if (av+mb===total&&!un) return '#fef9c3';
-  if (av>0&&!un) return '#d9f99d';
-  if (!av&&!mb&&un) return '#fef2f2';
+  if (av+mb===total) return '#fef9c3';
+  if (av>0) return '#d9f99d';
   return '#f8fafc';
 }
 
@@ -580,11 +609,10 @@ function getBestSlots(date) {
   state.hours.forEach(h => {
     const av = state.respondents.filter(n=>getCell(n,date,h)==='available').length;
     const mb = state.respondents.filter(n=>getCell(n,date,h)==='maybe').length;
-    const un = state.respondents.filter(n=>getCell(n,date,h)==='unavailable').length;
-    if (av+mb+un < 2) return;
+    if (av+mb < 2) return;
     const label = ALL_HOURS.find(x=>x.v===h)?.l||h;
-    if (av===total)              out.push({label,score:'all', rank:total*10});
-    else if (av+mb===total&&!un) out.push({label,score:'good',rank:av*2+mb+4});
+    if (av===total)         out.push({label,score:'all', rank:total*10});
+    else if (av+mb===total) out.push({label,score:'good',rank:av*2+mb+4});
   });
   return out.sort((a,b)=>b.rank-a.rank).slice(0,5);
 }
@@ -651,7 +679,7 @@ function renderTable() {
     state.respondents.length ? '— '+state.respondents.join(', ') : '';
 
   if (!state.dates.length || !state.hours.length) {
-    outer.innerHTML='<div style="text-align:center;padding:38px;color:#94a3b8">Add dates &amp; time slots above to get started.</div>';
+    outer.innerHTML='<div style="text-align:center;padding:38px;color:#94a3b8">No time slots configured for this poll.</div>';
     return;
   }
 
