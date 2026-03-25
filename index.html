@@ -4,190 +4,215 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Huddle</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@400,0&display=swap" rel="stylesheet"/>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        primary:     '#4e45e2',
+        'primary-dim':'#4136d6',
+        'on-primary':'#fbf7ff',
+        'primary-container':'#e8e7ff',
+        surface:     '#fcf8fe',
+        'surface-low':'#f6f2fa',
+        'surface-high':'#eae6f1',
+        'surface-highest':'#e4e1ed',
+        'on-surface':'#32313b',
+        'on-surface-variant':'#7b7984',
+        outline:     '#b3b0bc',
+        tertiary:    '#755478',
+        'tertiary-container':'#fdd2fd',
+        'on-tertiary-container':'#654568',
+      },
+      fontFamily: { sans: ['Manrope','sans-serif'] },
+      borderRadius: { xl:'0.75rem', '2xl':'1rem', '3xl':'1.5rem' },
+    }
+  }
+}
+</script>
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f0f2f5;min-height:100vh;color:#1a1a2e;-webkit-user-select:none;user-select:none}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Manrope', sans-serif; -webkit-user-select: none; user-select: none; }
+.material-symbols-outlined { font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; vertical-align: middle; }
 
-header{background:#fff;border-bottom:1px solid #e2e8f0;padding:13px 22px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 3px rgba(0,0,0,.06);position:sticky;top:0;z-index:10}
-.logo{font-size:1.3rem;font-weight:800;color:#4f46e5;letter-spacing:-.5px;white-space:nowrap;text-decoration:none}
-#poll-title-input{border:none;font-size:1rem;font-weight:600;color:#1a1a2e;background:transparent;outline:none;flex:1;padding:4px 8px;border-radius:6px;transition:background .15s;min-width:0}
-#poll-title-input:hover,#poll-title-input:focus{background:#f0f2f5}
-.header-back{border:none;background:none;cursor:pointer;color:#4f46e5;font-size:.88rem;font-weight:600;padding:5px 10px;border-radius:7px;transition:background .13s;white-space:nowrap}
-.header-back:hover{background:#eef2ff}
-
-main{max-width:1200px;margin:22px auto;padding:0 18px 60px}
-
-.card{background:#fff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:18px 22px;margin-bottom:16px}
-.card-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;margin-bottom:14px}
-
-.btn{border:none;border-radius:8px;padding:7px 14px;font-size:.87rem;font-weight:600;cursor:pointer;transition:opacity .15s,transform .1s}
-.btn:hover{opacity:.88}.btn:active{transform:scale(.97)}.btn:disabled{opacity:.4;cursor:default}
-.btn-primary{background:#4f46e5;color:#fff}
-.btn-ghost{background:#f1f5f9;color:#475569}
-.btn-sm{padding:5px 10px;font-size:.79rem}
-.btn-danger{background:#fee2e2;color:#dc2626}
-.btn-lg{padding:10px 22px;font-size:.95rem}
-
-/* ── HOME VIEW ── */
-#home-view{}
-.home-hero{text-align:center;padding:40px 20px 28px}
-.home-hero h1{font-size:2rem;font-weight:800;color:#1a1a2e;margin-bottom:8px}
-.home-hero p{color:#64748b;font-size:1rem;margin-bottom:22px}
-.poll-list{display:flex;flex-direction:column;gap:12px;margin-top:4px}
-.poll-card{background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.07);padding:16px 20px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:box-shadow .13s,transform .1s;border:1.5px solid transparent}
-.poll-card:hover{box-shadow:0 4px 12px rgba(79,70,229,.12);border-color:#c7d2fe;transform:translateY(-1px)}
-.poll-card-icon{font-size:1.6rem;flex-shrink:0}
-.poll-card-info{flex:1;min-width:0}
-.poll-card-title{font-size:.97rem;font-weight:700;color:#1a1a2e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.poll-card-meta{font-size:.78rem;color:#94a3b8;margin-top:2px}
-.poll-card-actions{display:flex;gap:7px;flex-shrink:0}
-.empty-home{text-align:center;padding:40px 20px;color:#94a3b8;font-size:.92rem}
-
-/* ── SETUP ── */
-.setup-row{display:grid;grid-template-columns:330px 1fr;gap:18px;align-items:start}
-@media(max-width:780px){.setup-row{grid-template-columns:1fr}}
-
-.cal-wrap{border:1.5px solid #e2e8f0;border-radius:12px;overflow:hidden}
-.cal-nav{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;background:#f8fafc;border-bottom:1px solid #e2e8f0}
-.cal-nav button{border:none;background:none;font-size:1.1rem;cursor:pointer;color:#4f46e5;padding:2px 7px;border-radius:6px;transition:background .12s}
-.cal-nav button:hover{background:#eef2ff}
-.cal-month{font-weight:700;font-size:.9rem;color:#1a1a2e}
+/* ── CALENDAR ── */
+.cal-wrap{border:1.5px solid #e4e1ed;border-radius:12px;overflow:hidden;background:#fff}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;background:#f6f2fa;border-bottom:1px solid #e4e1ed}
+.cal-nav button{border:none;background:none;font-size:1.1rem;cursor:pointer;color:#4e45e2;padding:2px 7px;border-radius:6px;transition:background .12s}
+.cal-nav button:hover{background:#e8e7ff}
+.cal-month{font-weight:700;font-size:.9rem;color:#32313b}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:7px}
-.cal-dow{text-align:center;font-size:.66rem;font-weight:700;color:#94a3b8;padding:3px 0}
-.cal-day{text-align:center;font-size:.81rem;padding:6px 0;border-radius:7px;cursor:pointer;position:relative;transition:background .1s,color .1s}
-.cal-day:hover:not(.cal-empty):not(.cal-past){background:#eef2ff;color:#4f46e5}
+.cal-dow{text-align:center;font-size:.66rem;font-weight:700;color:#b3b0bc;padding:3px 0}
+.cal-day{text-align:center;font-size:.81rem;padding:6px 0;border-radius:7px;cursor:pointer;position:relative;transition:background .1s,color .1s;color:#32313b}
+.cal-day:hover:not(.cal-empty):not(.cal-past){background:#e8e7ff;color:#4e45e2}
 .cal-day.cal-empty{cursor:default}
-.cal-day.cal-past{color:#cbd5e1;cursor:default}
-.cal-day.cal-selected{background:#4f46e5;color:#fff!important;font-weight:700}
+.cal-day.cal-past{color:#b3b0bc;cursor:default}
+.cal-day.cal-selected{background:#4e45e2;color:#fff!important;font-weight:700}
 .cal-day.cal-today::after{content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:currentColor}
 .cal-day.cal-selected.cal-today::after{background:#fff}
 .cal-actions{display:flex;gap:6px;padding:7px 8px 9px;flex-wrap:wrap}
-.sel-dates-label{font-size:.77rem;color:#64748b;margin-bottom:5px}
+.sel-dates-label{font-size:.77rem;color:#7b7984;margin-bottom:5px}
 .chip-list{display:flex;flex-wrap:wrap;gap:4px;min-height:22px}
 .chip{border:none;border-radius:20px;padding:3px 10px;font-size:.74rem;font-weight:600;cursor:pointer;transition:all .12s}
-.chip-date{background:#eef2ff;color:#4f46e5}.chip-date:hover{background:#c7d2fe}
+.chip-date{background:#e8e7ff;color:#4e45e2}.chip-date:hover{background:#c7c5f8}
 
-.hour-section h3{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#64748b;margin-bottom:8px}
+/* ── HOUR GRID ── */
+.setup-row{display:grid;grid-template-columns:330px 1fr;gap:18px;align-items:start}
+@media(max-width:780px){.setup-row{grid-template-columns:1fr}}
+.hour-section h3{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#7b7984;margin-bottom:8px}
 .hour-quick{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px}
 .hour-grid{display:flex;flex-wrap:wrap;gap:5px}
-.hour-btn{border:1.5px solid #e2e8f0;background:#fff;border-radius:20px;padding:5px 11px;font-size:.76rem;font-weight:500;cursor:pointer;color:#64748b;transition:all .13s}
-.hour-btn:hover{border-color:#4f46e5;color:#4f46e5}
-.hour-btn.active{background:#4f46e5;border-color:#4f46e5;color:#fff}
+.hour-btn{border:1.5px solid #e4e1ed;background:#fff;border-radius:20px;padding:5px 11px;font-size:.76rem;font-weight:500;cursor:pointer;color:#7b7984;transition:all .13s}
+.hour-btn:hover{border-color:#4e45e2;color:#4e45e2}
+.hour-btn.active{background:#4e45e2;border-color:#4e45e2;color:#fff}
 .add-row{display:flex;justify-content:flex-end;margin-top:13px;gap:8px;align-items:center}
 
-.name-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.name-row input{border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 13px;font-size:.93rem;outline:none;transition:border-color .15s;min-width:170px}
-.name-row input:focus{border-color:#4f46e5}
-#active-badge{font-size:.82rem;color:#4f46e5;font-weight:600}
-
-/* ── TABLE ── */
+/* ── AVAILABILITY TABLE ── */
 .table-outer{overflow-x:auto;-webkit-overflow-scrolling:touch}
 table{border-collapse:collapse;table-layout:fixed}
 table th,table td{padding:0}
-.th-corner{width:70px;min-width:70px;background:#fff;position:sticky;left:0;z-index:3;border-right:2px solid #e2e8f0}
-.th-date{min-width:64px;width:64px;text-align:center;padding:6px 3px;background:#f8fafc;border-bottom:2px solid #e2e8f0;border-right:1px solid #f0f2f5;white-space:nowrap;vertical-align:bottom}
-.th-date .d-weekday{display:block;font-size:.67rem;font-weight:600;color:#94a3b8;margin-bottom:1px}
-.th-date .d-short{display:block;font-size:.81rem;font-weight:700;color:#1a1a2e}
-
-.td-time{width:70px;min-width:70px;font-size:.71rem;font-weight:600;color:#94a3b8;text-align:right;padding:0 7px 0 0;vertical-align:middle;white-space:nowrap;background:#fff;position:sticky;left:0;z-index:2;border-right:2px solid #e2e8f0;height:38px}
-.av{width:64px;min-width:64px;height:38px;border-right:1px solid #f0f2f5;border-bottom:1px solid #f0f2f5;cursor:crosshair;position:relative;transition:background .1s;touch-action:none}
-.av:hover{outline:2px solid #a5b4fc;outline-offset:-2px;z-index:1}
+.th-corner{width:70px;min-width:70px;background:#fff;position:sticky;left:0;z-index:3;border-right:2px solid #e4e1ed}
+.th-date{min-width:64px;width:64px;text-align:center;padding:6px 3px;background:#f6f2fa;border-bottom:2px solid #e4e1ed;border-right:1px solid #eae6f1;white-space:nowrap;vertical-align:bottom}
+.th-date .d-weekday{display:block;font-size:.67rem;font-weight:600;color:#b3b0bc;margin-bottom:1px}
+.th-date .d-short{display:block;font-size:.81rem;font-weight:700;color:#32313b}
+.td-time{width:70px;min-width:70px;font-size:.71rem;font-weight:600;color:#b3b0bc;text-align:right;padding:0 7px 0 0;vertical-align:middle;white-space:nowrap;background:#fff;position:sticky;left:0;z-index:2;border-right:2px solid #e4e1ed;height:38px}
+.av{width:64px;min-width:64px;height:38px;border-right:1px solid #eae6f1;border-bottom:1px solid #eae6f1;cursor:crosshair;position:relative;transition:background .1s;touch-action:none}
+.av:hover{outline:2px solid #a5a3f8;outline-offset:-2px;z-index:1}
 .rdots{position:absolute;bottom:3px;left:0;right:0;display:flex;justify-content:center;gap:2px;pointer-events:none}
 .rdot{width:7px;height:7px;border-radius:50%;border:1px solid rgba(255,255,255,.7);flex-shrink:0}
 .rdot-me{width:8px;height:8px;border:2px solid #fff;box-shadow:0 0 0 1.5px rgba(0,0,0,.22)}
-tfoot tr{border-top:2px solid #e2e8f0}
-.td-sum-label{font-size:.64rem;color:#94a3b8;text-align:right;padding-right:6px;line-height:1.3;vertical-align:middle}
-.sum-date-cell{text-align:center;padding:5px 3px;vertical-align:middle;border-right:1px solid #f0f2f5}
+tfoot tr{border-top:2px solid #e4e1ed}
+.td-sum-label{font-size:.64rem;color:#b3b0bc;text-align:right;padding-right:6px;line-height:1.3;vertical-align:middle}
+.sum-date-cell{text-align:center;padding:5px 3px;vertical-align:middle;border-right:1px solid #eae6f1}
 .best-all{display:inline-block;background:#bbf7d0;color:#15803d;border-radius:4px;padding:1px 5px;font-size:.7rem;font-weight:700;margin:1px}
 .best-good{display:inline-block;background:#fef9c3;color:#92400e;border-radius:4px;padding:1px 5px;font-size:.7rem;font-weight:600;margin:1px}
 
-
-.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:.78rem;color:#64748b;align-items:center}
+/* ── LEGEND ── */
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:.78rem;color:#7b7984;align-items:center}
 .leg-item{display:flex;align-items:center;gap:5px}
 .leg-dot{width:13px;height:13px;border-radius:3px;border:1.5px solid}
 .leg-dot.av{background:#bbf7d0;border-color:#4ade80}
 .leg-dot.mb{background:#fef08a;border-color:#facc15}
-.leg-dot.no{background:#f1f5f9;border-color:#e2e8f0}
+.leg-dot.no{background:#f6f2fa;border-color:#e4e1ed}
 
-.actions-row{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
-.modal-bg{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);padding:16px}
-.modal-box{background:#fff;border-radius:16px;padding:28px 28px 22px;max-width:820px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)}
-.modal-label{display:block;font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#64748b;margin-bottom:6px}
-.modal-name-input{border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 13px;font-size:.97rem;font-weight:600;outline:none;transition:border-color .15s;width:100%}
-.modal-name-input:focus{border-color:#4f46e5}
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:rgba(50,49,59,.55);padding:16px;backdrop-filter:blur(4px)}
+.modal-box{background:#fcf8fe;border-radius:20px;padding:28px 28px 22px;max-width:820px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(78,69,226,.18)}
+.modal-label{display:block;font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#7b7984;margin-bottom:6px}
+.modal-name-input{border:1.5px solid #e4e1ed;border-radius:10px;padding:10px 14px;font-size:.97rem;font-weight:600;outline:none;transition:border-color .15s;width:100%;background:#fff;font-family:'Manrope',sans-serif}
+.modal-name-input:focus{border-color:#4e45e2}
 
-#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(14px);background:#1e293b;color:#fff;padding:9px 18px;border-radius:22px;font-size:.82rem;font-weight:500;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999}
+/* ── TOAST ── */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(14px);background:#32313b;color:#fcf8fe;padding:9px 18px;border-radius:22px;font-size:.82rem;font-weight:600;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
-<body>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col">
 
-<header>
-  <a class="logo" href="#" id="logo-link">&#129309; Huddle</a>
-  <button class="header-back" id="btn-back" style="display:none">&#8592; All polls</button>
-  <input id="poll-title-input" type="text" placeholder="Poll title…" maxlength="80" spellcheck="false" style="display:none"/>
+<!-- HEADER -->
+<header class="bg-surface/80 backdrop-blur-xl sticky top-0 z-50 w-full border-b border-outline/20 shadow-sm">
+  <div class="flex items-center gap-3 px-5 py-3.5 max-w-5xl mx-auto">
+    <a class="text-xl font-extrabold tracking-tight text-primary whitespace-nowrap no-underline" href="#" id="logo-link">Huddle</a>
+    <button class="hidden items-center gap-1.5 text-sm font-semibold text-primary bg-primary-container px-3 py-1.5 rounded-xl transition-all hover:opacity-80 active:scale-95" id="btn-back" style="display:none">
+      <span class="material-symbols-outlined text-base">arrow_back</span> All polls
+    </button>
+    <input id="poll-title-input" type="text" placeholder="Poll title…" maxlength="80" spellcheck="false"
+      class="hidden flex-1 border-none bg-transparent outline-none font-semibold text-on-surface text-base px-2 py-1 rounded-lg min-w-0 transition-colors hover:bg-surface-high focus:bg-surface-high"
+      style="display:none"/>
+  </div>
 </header>
 
 <!-- HOME VIEW -->
 <div id="home-view">
-  <main>
-    <div class="home-hero">
-      <h1>&#129309; Huddle</h1>
-      <p>Find the time that works for everyone. Create a poll, share it, done.</p>
-      <button class="btn btn-primary btn-lg" id="btn-new-poll">+ New Poll</button>
-    </div>
-    <div class="card">
-      <div class="card-title">Your Polls</div>
-      <div class="poll-list" id="poll-list"></div>
-    </div>
+  <main class="max-w-5xl mx-auto w-full px-5 py-10 pb-24 flex flex-col gap-8">
+
+    <section class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div>
+        <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-on-surface mb-2">Find the <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-tertiary">perfect time</span>.</h1>
+        <p class="text-on-surface-variant font-medium text-base">Create a poll, share it, and let everyone pick their availability.</p>
+      </div>
+      <button id="btn-new-poll"
+        class="flex items-center gap-2 bg-primary text-on-primary px-6 py-3 rounded-2xl font-bold text-base shadow-lg shadow-primary/20 hover:opacity-90 transition-all active:scale-95 whitespace-nowrap self-start md:self-auto">
+        <span class="material-symbols-outlined">add_circle</span> New Poll
+      </button>
+    </section>
+
+    <section>
+      <div class="flex items-center gap-3 mb-4">
+        <span class="text-xs font-bold uppercase tracking-widest text-on-surface-variant opacity-60">Your Polls</span>
+      </div>
+      <div id="poll-list" class="flex flex-col gap-3"></div>
+    </section>
+
   </main>
 </div>
 
 <!-- POLL VIEW -->
 <div id="poll-view" style="display:none">
-  <main>
+  <main class="max-w-5xl mx-auto w-full px-5 py-6 pb-24 flex flex-col gap-4">
 
-    <div class="card">
-      <div class="card-title">Enter Your Name</div>
-      <div class="name-row">
-        <input type="text" id="name-input" placeholder="Your name…" maxlength="40"/>
-        <button class="btn btn-primary" id="btn-name">Set name</button>
-        <span id="active-badge"></span>
+    <!-- Name card -->
+    <div class="bg-surface-lowest rounded-2xl border border-outline/20 shadow-sm p-5">
+      <div class="text-xs font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-3">Your Name</div>
+      <div class="flex gap-3 items-center flex-wrap">
+        <input type="text" id="name-input" placeholder="Enter your name…" maxlength="40"
+          class="border border-outline/40 rounded-xl px-3 py-2 text-sm font-semibold outline-none transition-colors focus:border-primary min-w-44 bg-white font-[Manrope]"/>
+        <button id="btn-name"
+          class="bg-primary text-on-primary px-4 py-2 rounded-xl text-sm font-bold hover:opacity-90 active:scale-95 transition-all">
+          Set name
+        </button>
+        <span id="active-badge" class="text-sm font-semibold text-primary"></span>
       </div>
-      <p style="margin-top:9px;font-size:.79rem;color:#94a3b8">Enter your name then drag across cells to mark your availability.</p>
+      <p class="mt-2 text-xs text-on-surface-variant">Enter your name, then drag across cells to mark your availability.</p>
     </div>
 
-    <div class="card">
-      <div class="card-title">Availability <span id="respondents-label" style="font-weight:400;text-transform:none;letter-spacing:0;color:#94a3b8;font-size:.77rem"></span></div>
+    <!-- Availability card -->
+    <div class="bg-surface-lowest rounded-2xl border border-outline/20 shadow-sm p-5">
+      <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+        <div class="text-xs font-bold uppercase tracking-widest text-on-surface-variant opacity-60">
+          Availability <span id="respondents-label" class="normal-case tracking-normal font-normal opacity-100 text-on-surface-variant text-[0.77rem]"></span>
+        </div>
+        <button id="btn-copy"
+          class="flex items-center gap-1.5 bg-primary text-on-primary text-xs font-bold px-3 py-1.5 rounded-xl hover:opacity-90 active:scale-95 transition-all">
+          <span class="material-symbols-outlined text-sm">link</span> Copy share link
+        </button>
+      </div>
       <div class="table-outer" id="table-outer">
-        <div style="text-align:center;padding:38px;color:#94a3b8">No time slots configured for this poll.</div>
+        <div class="text-center py-10 text-on-surface-variant text-sm">No time slots configured for this poll.</div>
       </div>
-      <div class="actions-row">
-        <button class="btn btn-primary btn-sm" id="btn-copy">&#128279; Copy share link</button>
-      </div>
-      <p style="margin-top:8px;font-size:.77rem;color:#94a3b8">&#128274; Polls are stored locally on this device. Use the share link to open this poll on another device or browser.</p>
+      <p class="mt-3 text-xs text-on-surface-variant flex items-center gap-1">
+        <span class="material-symbols-outlined text-sm">lock</span>
+        Polls are stored locally on this device. Use the share link to open on another device.
+      </p>
     </div>
 
-    <div class="card" style="padding:12px 22px">
+    <!-- Legend card -->
+    <div class="bg-surface-lowest rounded-2xl border border-outline/20 shadow-sm px-5 py-3">
       <div class="legend">
-        <span style="font-size:.71rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;margin-right:3px">Legend</span>
+        <span class="text-[.68rem] font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mr-1">Legend</span>
         <div class="leg-item"><div class="leg-dot av"></div><span>Available</span></div>
         <div class="leg-item"><div class="leg-dot mb"></div><span>Maybe</span></div>
         <div class="leg-item"><div class="leg-dot no"></div><span>No response</span></div>
-        <span style="color:#94a3b8;font-size:.75rem;margin-left:4px">Drag to paint cells</span>
+        <span class="text-on-surface-variant text-xs ml-1 opacity-70">Tap or drag to paint</span>
       </div>
     </div>
 
   </main>
 </div>
 
+<!-- CREATE MODAL -->
 <div id="create-modal" class="modal-bg" style="display:none">
   <div class="modal-box">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
-      <h2 style="font-size:1.15rem;font-weight:800;color:#1a1a2e">New Poll</h2>
-      <button class="btn btn-ghost btn-sm" id="modal-close">&times;</button>
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-lg font-extrabold text-on-surface">New Poll</h2>
+      <button id="modal-close" class="text-on-surface-variant hover:bg-surface-high rounded-xl p-1.5 transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
     </div>
-    <div style="margin-bottom:16px">
+    <div class="mb-5">
       <label class="modal-label" for="modal-title-input">Poll name</label>
       <input class="modal-name-input" id="modal-title-input" type="text" placeholder="e.g. Team lunch" maxlength="80" spellcheck="false"/>
     </div>
@@ -201,9 +226,9 @@ tfoot tr{border-top:2px solid #e2e8f0}
           </div>
           <div class="cal-grid" id="cal-grid"></div>
           <div class="cal-actions">
-            <button class="btn btn-ghost btn-sm" id="cal-this-week">This week</button>
-            <button class="btn btn-ghost btn-sm" id="cal-next-week">Next week</button>
-            <button class="btn btn-danger btn-sm" id="cal-clear">Clear</button>
+            <button class="btn-ghost-sm" id="cal-this-week">This week</button>
+            <button class="btn-ghost-sm" id="cal-next-week">Next week</button>
+            <button class="btn-danger-sm" id="cal-clear">Clear</button>
           </div>
           <div style="padding:0 10px 10px">
             <div class="sel-dates-label" id="sel-label">No dates selected</div>
@@ -214,15 +239,19 @@ tfoot tr{border-top:2px solid #e2e8f0}
       <div class="hour-section">
         <h3>Time Slots</h3>
         <div class="hour-quick">
-          <button class="btn btn-ghost btn-sm" id="h-all">All hours</button>
-          <button class="btn btn-ghost btn-sm" id="h-biz">Business (9-5)</button>
-          <button class="btn btn-ghost btn-sm" id="h-eve">Evening (5-10)</button>
-          <button class="btn btn-ghost btn-sm" id="h-none">None</button>
+          <button class="btn-ghost-sm" id="h-all">All hours</button>
+          <button class="btn-ghost-sm" id="h-biz">Business (9–5)</button>
+          <button class="btn-ghost-sm" id="h-eve">Evening (5–10)</button>
+          <button class="btn-ghost-sm" id="h-none">None</button>
         </div>
         <div class="hour-grid" id="hour-grid"></div>
         <div class="add-row">
-          <button class="btn btn-ghost btn-sm" id="modal-cancel">Cancel</button>
-          <button class="btn btn-primary btn-lg" id="btn-create-poll" disabled>Create Poll</button>
+          <button class="btn-ghost-sm" id="modal-cancel">Cancel</button>
+          <button id="btn-create-poll" disabled
+            class="flex items-center gap-2 bg-primary text-on-primary px-5 py-2.5 rounded-xl font-bold text-sm shadow shadow-primary/20 hover:opacity-90 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-default">
+            <span class="material-symbols-outlined text-base">rocket_launch</span>
+            <span id="btn-create-poll-label">Create Poll</span>
+          </button>
         </div>
       </div>
     </div>
@@ -230,6 +259,24 @@ tfoot tr{border-top:2px solid #e2e8f0}
 </div>
 
 <div id="toast"></div>
+
+<style>
+/* small button helpers used in modal (not worth Tailwind classes) */
+.btn-ghost-sm{border:1.5px solid #e4e1ed;background:#fff;border-radius:8px;padding:5px 11px;font-size:.79rem;font-weight:600;cursor:pointer;color:#7b7984;font-family:'Manrope',sans-serif;transition:all .13s}
+.btn-ghost-sm:hover{border-color:#4e45e2;color:#4e45e2}
+.btn-danger-sm{border:none;background:#fee2e2;border-radius:8px;padding:5px 11px;font-size:.79rem;font-weight:600;cursor:pointer;color:#dc2626;font-family:'Manrope',sans-serif;transition:all .13s}
+.btn-danger-sm:hover{opacity:.85}
+/* respondent tab buttons rendered by JS */
+.btn,.btn-sm{border:none;border-radius:8px;padding:5px 12px;font-size:.79rem;font-weight:600;cursor:pointer;transition:all .13s;font-family:'Manrope',sans-serif}
+.btn-primary{background:#4e45e2;color:#fbf7ff}
+.btn-primary:hover{opacity:.88}
+.btn-ghost{background:#eae6f1;color:#32313b}
+.btn-ghost:hover{background:#e4e1ed}
+.btn-danger{background:#fee2e2;color:#dc2626}
+.btn-danger:hover{opacity:.85}
+/* surface-lowest alias */
+.bg-surface-lowest{background-color:#ffffff}
+</style>
 
 <script>
 // ─────────────────────────────────────────────────────────────────────────────
@@ -299,7 +346,7 @@ function renderHome() {
   const ids = Object.keys(polls).sort((a,b) => (polls[b].createdAt||0) - (polls[a].createdAt||0));
   const list = document.getElementById('poll-list');
   if (ids.length === 0) {
-    list.innerHTML = '<div class="empty-home">No polls yet — click <strong>+ New Poll</strong> to get started.</div>';
+    list.innerHTML = '<div class="text-center py-10 text-on-surface-variant text-sm">No polls yet — click <strong>New Poll</strong> to get started.</div>';
     return;
   }
   list.innerHTML = ids.map(id => {
@@ -308,15 +355,17 @@ function renderHome() {
     const nr = (p.respondents||[]).length;
     const nd = (p.dates||[]).length;
     const meta = [dt, nd ? nd+' day'+(nd>1?'s':'') : '', nr ? nr+' respondent'+(nr>1?'s':'') : ''].filter(Boolean).join(' \u00b7 ');
-    return `<div class="poll-card" onclick="openPoll('${escAttr(id)}')" role="button">
-      <div class="poll-card-icon">&#128197;</div>
-      <div class="poll-card-info">
-        <div class="poll-card-title">${escHtml(p.title||'Untitled poll')}</div>
-        <div class="poll-card-meta">${meta}</div>
+    return `<div class="group bg-white border border-outline/20 rounded-2xl p-5 flex items-center gap-4 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-primary/30 border-l-4 border-l-primary" onclick="openPoll('${escAttr(id)}')" role="button">
+      <div class="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center text-primary flex-shrink-0">
+        <span class="material-symbols-outlined">groups</span>
       </div>
-      <div class="poll-card-actions">
-        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openPoll('${escAttr(id)}')">Open</button>
-        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deletePoll('${escAttr(id)}')">Delete</button>
+      <div class="flex-1 min-w-0">
+        <div class="font-bold text-on-surface text-sm truncate">${escHtml(p.title||'Untitled poll')}</div>
+        <div class="text-xs text-on-surface-variant mt-0.5">${meta}</div>
+      </div>
+      <div class="flex gap-2 flex-shrink-0">
+        <button class="text-xs font-bold bg-primary text-on-primary px-3 py-1.5 rounded-xl hover:opacity-90 active:scale-95 transition-all" onclick="event.stopPropagation();openPoll('${escAttr(id)}')">Open</button>
+        <button class="text-xs font-bold bg-red-100 text-red-600 px-3 py-1.5 rounded-xl hover:opacity-85 active:scale-95 transition-all" onclick="event.stopPropagation();deletePoll('${escAttr(id)}')">Delete</button>
       </div>
     </div>`;
   }).join('');
@@ -421,7 +470,7 @@ function showPoll() {
 
   document.getElementById('home-view').style.display = 'none';
   document.getElementById('poll-view').style.display = '';
-  document.getElementById('btn-back').style.display = '';
+  document.getElementById('btn-back').style.display = 'flex';
   const titleEl = document.getElementById('poll-title-input');
   titleEl.style.display = '';
   titleEl.value = state.title || '';
@@ -559,9 +608,10 @@ document.getElementById('h-none').addEventListener('click', function(){ pendingH
 function updateAddBtn() {
   const n = pendingDates.size * pendingHours.size;
   const btn = document.getElementById('btn-create-poll');
+  const lbl = document.getElementById('btn-create-poll-label');
   if (!btn) return;
   btn.disabled = n === 0;
-  btn.textContent = n > 0 ? 'Create Poll (' + n + ' slot' + (n===1?'':'s') + ')' : 'Create Poll';
+  if (lbl) lbl.textContent = n > 0 ? 'Create Poll (' + n + ' slot' + (n===1?'':'s') + ')' : 'Create Poll';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
