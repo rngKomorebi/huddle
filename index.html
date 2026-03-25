@@ -90,7 +90,7 @@ table th,table td{padding:0}
 .th-date .d-short{display:block;font-size:.81rem;font-weight:700;color:#1a1a2e}
 
 .td-time{width:70px;min-width:70px;font-size:.71rem;font-weight:600;color:#94a3b8;text-align:right;padding:0 7px 0 0;vertical-align:middle;white-space:nowrap;background:#fff;position:sticky;left:0;z-index:2;border-right:2px solid #e2e8f0;height:38px}
-.av{width:64px;min-width:64px;height:38px;border-right:1px solid #f0f2f5;border-bottom:1px solid #f0f2f5;cursor:crosshair;position:relative;transition:background .1s}
+.av{width:64px;min-width:64px;height:38px;border-right:1px solid #f0f2f5;border-bottom:1px solid #f0f2f5;cursor:crosshair;position:relative;transition:background .1s;touch-action:none}
 .av:hover{outline:2px solid #a5b4fc;outline-offset:-2px;z-index:1}
 .rdots{position:absolute;bottom:3px;left:0;right:0;display:flex;justify-content:center;gap:2px;pointer-events:none}
 .rdot{width:7px;height:7px;border-radius:50%;border:1px solid rgba(255,255,255,.7);flex-shrink:0}
@@ -163,8 +163,9 @@ tfoot tr{border-top:2px solid #e2e8f0}
         <div style="text-align:center;padding:38px;color:#94a3b8">No time slots configured for this poll.</div>
       </div>
       <div class="actions-row">
-        <button class="btn btn-ghost btn-sm" id="btn-copy">&#128279; Copy share link</button>
+        <button class="btn btn-primary btn-sm" id="btn-copy">&#128279; Copy share link</button>
       </div>
+      <p style="margin-top:8px;font-size:.77rem;color:#94a3b8">&#128274; Polls are stored locally on this device. Use the share link to open this poll on another device or browser.</p>
     </div>
 
     <div class="card" style="padding:12px 22px">
