@@ -1,0 +1,758 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Huddle</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f0f2f5;min-height:100vh;color:#1a1a2e;-webkit-user-select:none;user-select:none}
+
+header{background:#fff;border-bottom:1px solid #e2e8f0;padding:13px 22px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 3px rgba(0,0,0,.06);position:sticky;top:0;z-index:10}
+.logo{font-size:1.3rem;font-weight:800;color:#4f46e5;letter-spacing:-.5px;white-space:nowrap;text-decoration:none}
+#poll-title-input{border:none;font-size:1rem;font-weight:600;color:#1a1a2e;background:transparent;outline:none;flex:1;padding:4px 8px;border-radius:6px;transition:background .15s;min-width:0}
+#poll-title-input:hover,#poll-title-input:focus{background:#f0f2f5}
+.header-back{border:none;background:none;cursor:pointer;color:#4f46e5;font-size:.88rem;font-weight:600;padding:5px 10px;border-radius:7px;transition:background .13s;white-space:nowrap}
+.header-back:hover{background:#eef2ff}
+
+main{max-width:1200px;margin:22px auto;padding:0 18px 60px}
+
+.card{background:#fff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:18px 22px;margin-bottom:16px}
+.card-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;margin-bottom:14px}
+
+.btn{border:none;border-radius:8px;padding:7px 14px;font-size:.87rem;font-weight:600;cursor:pointer;transition:opacity .15s,transform .1s}
+.btn:hover{opacity:.88}.btn:active{transform:scale(.97)}.btn:disabled{opacity:.4;cursor:default}
+.btn-primary{background:#4f46e5;color:#fff}
+.btn-ghost{background:#f1f5f9;color:#475569}
+.btn-sm{padding:5px 10px;font-size:.79rem}
+.btn-danger{background:#fee2e2;color:#dc2626}
+.btn-lg{padding:10px 22px;font-size:.95rem}
+
+/* ── HOME VIEW ── */
+#home-view{}
+.home-hero{text-align:center;padding:40px 20px 28px}
+.home-hero h1{font-size:2rem;font-weight:800;color:#1a1a2e;margin-bottom:8px}
+.home-hero p{color:#64748b;font-size:1rem;margin-bottom:22px}
+.poll-list{display:flex;flex-direction:column;gap:12px;margin-top:4px}
+.poll-card{background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.07);padding:16px 20px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:box-shadow .13s,transform .1s;border:1.5px solid transparent}
+.poll-card:hover{box-shadow:0 4px 12px rgba(79,70,229,.12);border-color:#c7d2fe;transform:translateY(-1px)}
+.poll-card-icon{font-size:1.6rem;flex-shrink:0}
+.poll-card-info{flex:1;min-width:0}
+.poll-card-title{font-size:.97rem;font-weight:700;color:#1a1a2e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.poll-card-meta{font-size:.78rem;color:#94a3b8;margin-top:2px}
+.poll-card-actions{display:flex;gap:7px;flex-shrink:0}
+.empty-home{text-align:center;padding:40px 20px;color:#94a3b8;font-size:.92rem}
+
+/* ── SETUP ── */
+.setup-row{display:grid;grid-template-columns:330px 1fr;gap:18px;align-items:start}
+@media(max-width:780px){.setup-row{grid-template-columns:1fr}}
+
+.cal-wrap{border:1.5px solid #e2e8f0;border-radius:12px;overflow:hidden}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;background:#f8fafc;border-bottom:1px solid #e2e8f0}
+.cal-nav button{border:none;background:none;font-size:1.1rem;cursor:pointer;color:#4f46e5;padding:2px 7px;border-radius:6px;transition:background .12s}
+.cal-nav button:hover{background:#eef2ff}
+.cal-month{font-weight:700;font-size:.9rem;color:#1a1a2e}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:7px}
+.cal-dow{text-align:center;font-size:.66rem;font-weight:700;color:#94a3b8;padding:3px 0}
+.cal-day{text-align:center;font-size:.81rem;padding:6px 0;border-radius:7px;cursor:pointer;position:relative;transition:background .1s,color .1s}
+.cal-day:hover:not(.cal-empty):not(.cal-past){background:#eef2ff;color:#4f46e5}
+.cal-day.cal-empty{cursor:default}
+.cal-day.cal-past{color:#cbd5e1;cursor:default}
+.cal-day.cal-selected{background:#4f46e5;color:#fff!important;font-weight:700}
+.cal-day.cal-today::after{content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:currentColor}
+.cal-day.cal-selected.cal-today::after{background:#fff}
+.cal-actions{display:flex;gap:6px;padding:7px 8px 9px;flex-wrap:wrap}
+.sel-dates-label{font-size:.77rem;color:#64748b;margin-bottom:5px}
+.chip-list{display:flex;flex-wrap:wrap;gap:4px;min-height:22px}
+.chip{border:none;border-radius:20px;padding:3px 10px;font-size:.74rem;font-weight:600;cursor:pointer;transition:all .12s}
+.chip-date{background:#eef2ff;color:#4f46e5}.chip-date:hover{background:#c7d2fe}
+
+.hour-section h3{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#64748b;margin-bottom:8px}
+.hour-quick{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px}
+.hour-grid{display:flex;flex-wrap:wrap;gap:5px}
+.hour-btn{border:1.5px solid #e2e8f0;background:#fff;border-radius:20px;padding:5px 11px;font-size:.76rem;font-weight:500;cursor:pointer;color:#64748b;transition:all .13s}
+.hour-btn:hover{border-color:#4f46e5;color:#4f46e5}
+.hour-btn.active{background:#4f46e5;border-color:#4f46e5;color:#fff}
+.add-row{display:flex;justify-content:flex-end;margin-top:13px;gap:8px;align-items:center}
+
+.name-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.name-row input{border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 13px;font-size:.93rem;outline:none;transition:border-color .15s;min-width:170px}
+.name-row input:focus{border-color:#4f46e5}
+#active-badge{font-size:.82rem;color:#4f46e5;font-weight:600}
+
+/* ── TABLE ── */
+.table-outer{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;table-layout:fixed}
+table th,table td{padding:0}
+.th-corner{width:70px;min-width:70px;background:#fff;position:sticky;left:0;z-index:3;border-right:2px solid #e2e8f0}
+.th-date{min-width:64px;width:64px;text-align:center;padding:6px 3px;background:#f8fafc;border-bottom:2px solid #e2e8f0;border-right:1px solid #f0f2f5;white-space:nowrap;vertical-align:bottom}
+.th-date .d-weekday{display:block;font-size:.67rem;font-weight:600;color:#94a3b8;margin-bottom:1px}
+.th-date .d-short{display:block;font-size:.81rem;font-weight:700;color:#1a1a2e}
+
+.td-time{width:70px;min-width:70px;font-size:.71rem;font-weight:600;color:#94a3b8;text-align:right;padding:0 7px 0 0;vertical-align:middle;white-space:nowrap;background:#fff;position:sticky;left:0;z-index:2;border-right:2px solid #e2e8f0;height:38px}
+.av{width:64px;min-width:64px;height:38px;border-right:1px solid #f0f2f5;border-bottom:1px solid #f0f2f5;cursor:crosshair;position:relative;transition:background .1s}
+.av:hover{outline:2px solid #a5b4fc;outline-offset:-2px;z-index:1}
+.rdots{position:absolute;bottom:3px;left:0;right:0;display:flex;justify-content:center;gap:2px;pointer-events:none}
+.rdot{width:7px;height:7px;border-radius:50%;border:1px solid rgba(255,255,255,.7);flex-shrink:0}
+.rdot-me{width:8px;height:8px;border:2px solid #fff;box-shadow:0 0 0 1.5px rgba(0,0,0,.22)}
+tfoot tr{border-top:2px solid #e2e8f0}
+.td-sum-label{font-size:.64rem;color:#94a3b8;text-align:right;padding-right:6px;line-height:1.3;vertical-align:middle}
+.sum-date-cell{text-align:center;padding:5px 3px;vertical-align:middle;border-right:1px solid #f0f2f5}
+.best-all{display:inline-block;background:#bbf7d0;color:#15803d;border-radius:4px;padding:1px 5px;font-size:.7rem;font-weight:700;margin:1px}
+.best-good{display:inline-block;background:#fef9c3;color:#92400e;border-radius:4px;padding:1px 5px;font-size:.7rem;font-weight:600;margin:1px}
+
+
+.legend{display:flex;gap:13px;flex-wrap:wrap;font-size:.78rem;color:#64748b;align-items:center}
+.leg-item{display:flex;align-items:center;gap:5px}
+.leg-dot{width:13px;height:13px;border-radius:3px;border:1.5px solid}
+.leg-dot.av{background:#bbf7d0;border-color:#4ade80}
+.leg-dot.mb{background:#fef08a;border-color:#facc15}
+.leg-dot.un{background:#fecaca;border-color:#fca5a5}
+.leg-dot.no{background:#f1f5f9;border-color:#e2e8f0}
+
+.actions-row{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(14px);background:#1e293b;color:#fff;padding:9px 18px;border-radius:22px;font-size:.82rem;font-weight:500;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="#" id="logo-link">&#129309; Huddle</a>
+  <button class="header-back" id="btn-back" style="display:none">&#8592; All polls</button>
+  <input id="poll-title-input" type="text" placeholder="Poll title…" maxlength="80" spellcheck="false" style="display:none"/>
+</header>
+
+<!-- HOME VIEW -->
+<div id="home-view">
+  <main>
+    <div class="home-hero">
+      <h1>&#129309; Huddle</h1>
+      <p>Find the time that works for everyone. Create a poll, share it, done.</p>
+      <button class="btn btn-primary btn-lg" id="btn-new-poll">+ New Poll</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Your Polls</div>
+      <div class="poll-list" id="poll-list"></div>
+    </div>
+  </main>
+</div>
+
+<!-- POLL VIEW -->
+<div id="poll-view" style="display:none">
+  <main>
+
+    <div class="card">
+      <div class="card-title">Step 1 &mdash; Pick Dates &amp; Time Range</div>
+      <div class="setup-row">
+        <div>
+          <div class="cal-wrap">
+            <div class="cal-nav">
+              <button id="cal-prev">&#8249;</button>
+              <span class="cal-month" id="cal-month-label"></span>
+              <button id="cal-next">&#8250;</button>
+            </div>
+            <div class="cal-grid" id="cal-grid"></div>
+            <div class="cal-actions">
+              <button class="btn btn-ghost btn-sm" id="cal-this-week">This week</button>
+              <button class="btn btn-ghost btn-sm" id="cal-next-week">Next week</button>
+              <button class="btn btn-danger btn-sm" id="cal-clear">Clear</button>
+            </div>
+            <div style="padding:0 10px 10px">
+              <div class="sel-dates-label" id="sel-label">No dates selected</div>
+              <div class="chip-list" id="date-chips"></div>
+            </div>
+          </div>
+        </div>
+        <div class="hour-section">
+          <h3>Time Slots</h3>
+          <div class="hour-quick">
+            <button class="btn btn-ghost btn-sm" id="h-all">All hours</button>
+            <button class="btn btn-ghost btn-sm" id="h-biz">Business (9-5)</button>
+            <button class="btn btn-ghost btn-sm" id="h-eve">Evening (5-10)</button>
+            <button class="btn btn-ghost btn-sm" id="h-none">None</button>
+          </div>
+          <div class="hour-grid" id="hour-grid"></div>
+          <div class="add-row">
+            <button class="btn btn-primary" id="btn-add-slots" disabled>+ Add to poll</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Step 2 &mdash; Enter Your Name</div>
+      <div class="name-row">
+        <input type="text" id="name-input" placeholder="Your name…" maxlength="40"/>
+        <button class="btn btn-primary" id="btn-name">Set name</button>
+        <span id="active-badge"></span>
+      </div>
+      <p style="margin-top:9px;font-size:.79rem;color:#94a3b8">Enter your name then drag across cells to mark your availability.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Step 3 &mdash; Availability <span id="respondents-label" style="font-weight:400;text-transform:none;letter-spacing:0;color:#94a3b8;font-size:.77rem"></span></div>
+      <div class="table-outer" id="table-outer">
+        <div style="text-align:center;padding:38px;color:#94a3b8">Add dates &amp; time slots in Step 1 to get started.</div>
+      </div>
+      <div class="actions-row">
+        <button class="btn btn-ghost btn-sm" id="btn-copy">&#128279; Copy share link</button>
+      </div>
+    </div>
+
+    <div class="card" style="padding:12px 22px">
+      <div class="legend">
+        <span style="font-size:.71rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#94a3b8;margin-right:3px">Legend</span>
+        <div class="leg-item"><div class="leg-dot av"></div><span>Available</span></div>
+        <div class="leg-item"><div class="leg-dot mb"></div><span>Maybe</span></div>
+        <div class="leg-item"><div class="leg-dot un"></div><span>Unavailable</span></div>
+        <div class="leg-item"><div class="leg-dot no"></div><span>No response</span></div>
+        <span style="color:#94a3b8;font-size:.75rem;margin-left:4px">Drag to paint cells</span>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// CONSTANTS
+// ─────────────────────────────────────────────────────────────────────────────
+const ALL_HOURS = [
+  {v:'06:00',l:'6 AM'},{v:'07:00',l:'7 AM'},{v:'08:00',l:'8 AM'},
+  {v:'09:00',l:'9 AM'},{v:'10:00',l:'10 AM'},{v:'11:00',l:'11 AM'},
+  {v:'12:00',l:'12 PM'},{v:'13:00',l:'1 PM'},{v:'14:00',l:'2 PM'},
+  {v:'15:00',l:'3 PM'},{v:'16:00',l:'4 PM'},{v:'17:00',l:'5 PM'},
+  {v:'18:00',l:'6 PM'},{v:'19:00',l:'7 PM'},{v:'20:00',l:'8 PM'},
+  {v:'21:00',l:'9 PM'},{v:'22:00',l:'10 PM'},
+];
+const HOUR_ORDER = ALL_HOURS.map(h => h.v);
+const BIZ = ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
+const EVE = ['17:00','18:00','19:00','20:00','21:00','22:00'];
+const CYCLE = ['none','available','maybe','unavailable'];
+const DOT_COLOR = {none:'#e2e8f0',available:'#4ade80',maybe:'#facc15',unavailable:'#fca5a5'};
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const STORE_KEY = 'huddle_polls';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MULTI-POLL STORAGE
+// ─────────────────────────────────────────────────────────────────────────────
+function loadAll() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch(e) { return {}; }
+}
+function saveAll(polls) {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(polls)); } catch(e) {}
+}
+function genId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ROUTER  (hash-based: #  = home,  #p=ID = poll)
+// ─────────────────────────────────────────────────────────────────────────────
+let currentPollId = null;
+
+window.addEventListener('hashchange', route);
+
+function route() {
+  const m = location.hash.match(/^#p=(.+)$/);
+  if (m) {
+    currentPollId = m[1];
+    showPoll();
+  } else {
+    currentPollId = null;
+    showHome();
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HOME
+// ─────────────────────────────────────────────────────────────────────────────
+function showHome() {
+  document.getElementById('home-view').style.display = '';
+  document.getElementById('poll-view').style.display = 'none';
+  document.getElementById('btn-back').style.display = 'none';
+  document.getElementById('poll-title-input').style.display = 'none';
+  document.title = 'Huddle';
+  renderHome();
+}
+
+function renderHome() {
+  const polls = loadAll();
+  const ids = Object.keys(polls).sort((a,b) => (polls[b].createdAt||0) - (polls[a].createdAt||0));
+  const list = document.getElementById('poll-list');
+  if (ids.length === 0) {
+    list.innerHTML = '<div class="empty-home">No polls yet — click <strong>+ New Poll</strong> to get started.</div>';
+    return;
+  }
+  list.innerHTML = ids.map(id => {
+    const p = polls[id];
+    const dt = p.createdAt ? new Date(p.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
+    const nr = (p.respondents||[]).length;
+    const nd = (p.dates||[]).length;
+    const meta = [dt, nd ? nd+' day'+(nd>1?'s':'') : '', nr ? nr+' respondent'+(nr>1?'s':'') : ''].filter(Boolean).join(' \u00b7 ');
+    return `<div class="poll-card" onclick="openPoll('${escAttr(id)}')" role="button">
+      <div class="poll-card-icon">&#128197;</div>
+      <div class="poll-card-info">
+        <div class="poll-card-title">${escHtml(p.title||'Untitled poll')}</div>
+        <div class="poll-card-meta">${meta}</div>
+      </div>
+      <div class="poll-card-actions">
+        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();openPoll('${escAttr(id)}')">Open</button>
+        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deletePoll('${escAttr(id)}')">Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openPoll(id) { location.hash = '#p=' + id; }
+
+function deletePoll(id) {
+  const polls = loadAll();
+  if (!polls[id]) return;
+  if (!confirm('Delete "' + (polls[id].title || 'this poll') + '"?')) return;
+  delete polls[id];
+  saveAll(polls);
+  renderHome();
+}
+
+document.getElementById('btn-new-poll').addEventListener('click', function() {
+  const title = prompt('Poll name:');
+  if (title === null) return;
+  const id = genId();
+  const polls = loadAll();
+  polls[id] = { title: title.trim() || 'New poll', dates:[], hours:[], respondents:[], responses:{}, createdAt:Date.now() };
+  saveAll(polls);
+  openPoll(id);
+});
+
+document.getElementById('logo-link').addEventListener('click', function(e) {
+  e.preventDefault(); location.hash = '';
+});
+document.getElementById('btn-back').addEventListener('click', function() { location.hash = ''; });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POLL STATE
+// ─────────────────────────────────────────────────────────────────────────────
+let state = null;
+let activeName = null;
+let pendingDates = new Set();
+let pendingHours = new Set(BIZ);
+
+function saveCurrent() {
+  if (!currentPollId || !state) return;
+  const polls = loadAll();
+  polls[currentPollId] = state;
+  saveAll(polls);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SHOW POLL
+// ─────────────────────────────────────────────────────────────────────────────
+function showPoll() {
+  // Attempt to load from share URL first
+  const sp = new URLSearchParams(location.search).get('share');
+  if (sp) {
+    try {
+      const imported = JSON.parse(decodeURIComponent(atob(sp)));
+      const polls = loadAll();
+      // import as a new poll if not already present
+      if (!polls[currentPollId]) {
+        polls[currentPollId] = { ...imported, createdAt: Date.now() };
+        saveAll(polls);
+        history.replaceState(null,'', location.pathname + location.hash);
+      }
+    } catch(e) {}
+  }
+
+  const polls = loadAll();
+  if (!polls[currentPollId]) { location.hash = ''; return; }
+
+  state = polls[currentPollId];
+  activeName = null;
+
+  document.getElementById('home-view').style.display = 'none';
+  document.getElementById('poll-view').style.display = '';
+  document.getElementById('btn-back').style.display = '';
+  const titleEl = document.getElementById('poll-title-input');
+  titleEl.style.display = '';
+  titleEl.value = state.title || '';
+  document.title = (state.title || 'New poll') + ' — Huddle';
+
+  document.getElementById('active-badge').textContent = '';
+  pendingDates.clear();
+  pendingHours = new Set(BIZ);
+
+  buildCalendar();
+  buildHourGrid();
+  updateAddBtn();
+  renderTable();
+}
+
+document.getElementById('poll-title-input').addEventListener('input', function() {
+  if (!state) return;
+  state.title = this.value;
+  document.title = (this.value || 'New poll') + ' — Huddle';
+  saveCurrent();
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DATE HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+function isoToday() {
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function isoFrom(d) {
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function fmtDate(iso) {
+  const d = new Date(iso+'T12:00:00');
+  return {
+    weekday: d.toLocaleDateString('en-US',{weekday:'short'}),
+    short:   d.toLocaleDateString('en-US',{month:'short',day:'numeric'}),
+    full:    d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}),
+  };
+}
+function sortedUnique(arr) { return [...new Set(arr)].sort(); }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CALENDAR
+// ─────────────────────────────────────────────────────────────────────────────
+let calYear, calMonth;
+{ const t = new Date(); calYear = t.getFullYear(); calMonth = t.getMonth(); }
+let calDragMode = null;
+
+function buildCalendar() {
+  const label = document.getElementById('cal-month-label');
+  const grid  = document.getElementById('cal-grid');
+  label.textContent = new Date(calYear,calMonth,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  const today = isoToday();
+  const first = new Date(calYear,calMonth,1).getDay();
+  const dim   = new Date(calYear,calMonth+1,0).getDate();
+  let html = DAYS.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+  for (let i=0;i<first;i++) html += '<div class="cal-day cal-empty"></div>';
+  for (let d=1;d<=dim;d++) {
+    const iso = isoFrom(new Date(calYear,calMonth,d));
+    const past = iso<today;
+    let cls = 'cal-day'+(past?' cal-past':'')+(iso===today?' cal-today':'')+(pendingDates.has(iso)?' cal-selected':'');
+    html += `<div class="${cls}" data-iso="${iso}">${d}</div>`;
+  }
+  grid.innerHTML = html;
+  updateDateChips();
+}
+
+const calGrid = document.getElementById('cal-grid');
+calGrid.addEventListener('pointerdown', function(e) {
+  const day = e.target.closest('.cal-day');
+  if (!day || day.classList.contains('cal-empty') || day.classList.contains('cal-past')) return;
+  e.preventDefault();
+  this.setPointerCapture(e.pointerId);
+  calDragMode = pendingDates.has(day.dataset.iso) ? 'remove' : 'add';
+  applyCalDrag(day.dataset.iso);
+}, {passive:false});
+calGrid.addEventListener('pointermove', function(e) {
+  if (!calDragMode) return;
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  if (!el) return;
+  const day = el.closest && el.closest('.cal-day');
+  if (!day || day.classList.contains('cal-empty') || day.classList.contains('cal-past')) return;
+  applyCalDrag(day.dataset.iso);
+});
+calGrid.addEventListener('pointerup',     function(){ calDragMode=null; });
+calGrid.addEventListener('pointercancel', function(){ calDragMode=null; });
+
+function applyCalDrag(iso) {
+  if (iso < isoToday()) return;
+  if (calDragMode==='add') pendingDates.add(iso);
+  else pendingDates.delete(iso);
+  buildCalendar(); updateAddBtn();
+}
+
+document.getElementById('cal-prev').addEventListener('click', function(){ calMonth--; if(calMonth<0){calMonth=11;calYear--;} buildCalendar(); });
+document.getElementById('cal-next').addEventListener('click', function(){ calMonth++; if(calMonth>11){calMonth=0;calYear++;} buildCalendar(); });
+
+function addWeekRange(offset) {
+  const d = new Date(); d.setHours(12,0,0,0);
+  const sun = new Date(d); sun.setDate(d.getDate()-d.getDay()+offset*7);
+  for (let i=0;i<7;i++) { const iso=isoFrom(new Date(sun.getFullYear(),sun.getMonth(),sun.getDate()+i)); if(iso>=isoToday()) pendingDates.add(iso); }
+  calYear=sun.getFullYear(); calMonth=sun.getMonth();
+  buildCalendar(); updateAddBtn();
+}
+document.getElementById('cal-this-week').addEventListener('click', ()=>addWeekRange(0));
+document.getElementById('cal-next-week').addEventListener('click', ()=>addWeekRange(1));
+document.getElementById('cal-clear').addEventListener('click', function(){ pendingDates.clear(); buildCalendar(); updateAddBtn(); });
+
+function updateDateChips() {
+  const sorted = [...pendingDates].sort();
+  const label = document.getElementById('sel-label');
+  const chips = document.getElementById('date-chips');
+  if (!sorted.length) { label.textContent='No dates selected'; chips.innerHTML=''; return; }
+  label.textContent = sorted.length+' date'+(sorted.length>1?'s':'')+' selected — click to remove';
+  chips.innerHTML = sorted.map(iso=>`<button class="chip chip-date" data-rem="${iso}">${fmtDate(iso).full} \u00d7</button>`).join('');
+}
+document.getElementById('date-chips').addEventListener('click', function(e) {
+  const b = e.target.closest('[data-rem]'); if(!b) return;
+  pendingDates.delete(b.dataset.rem); buildCalendar(); updateAddBtn();
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HOUR GRID
+// ─────────────────────────────────────────────────────────────────────────────
+function buildHourGrid() {
+  document.getElementById('hour-grid').innerHTML = ALL_HOURS.map(h =>
+    `<button class="hour-btn${pendingHours.has(h.v)?' active':''}" data-h="${h.v}">${h.l}</button>`
+  ).join('');
+}
+document.getElementById('hour-grid').addEventListener('click', function(e) {
+  const b = e.target.closest('[data-h]'); if(!b) return;
+  if (pendingHours.has(b.dataset.h)) pendingHours.delete(b.dataset.h); else pendingHours.add(b.dataset.h);
+  buildHourGrid(); updateAddBtn();
+});
+document.getElementById('h-all').addEventListener('click',  function(){ ALL_HOURS.forEach(h=>pendingHours.add(h.v)); buildHourGrid(); updateAddBtn(); });
+document.getElementById('h-biz').addEventListener('click',  function(){ pendingHours=new Set(BIZ); buildHourGrid(); updateAddBtn(); });
+document.getElementById('h-eve').addEventListener('click',  function(){ pendingHours=new Set(EVE); buildHourGrid(); updateAddBtn(); });
+document.getElementById('h-none').addEventListener('click', function(){ pendingHours.clear(); buildHourGrid(); updateAddBtn(); });
+
+function updateAddBtn() {
+  const n = pendingDates.size * pendingHours.size;
+  const btn = document.getElementById('btn-add-slots');
+  btn.disabled = n===0;
+  btn.textContent = n>0 ? '+ Add '+n+' slot'+(n===1?'':'s')+' to poll' : '+ Add to poll';
+}
+document.getElementById('btn-add-slots').addEventListener('click', function() {
+  if (!state || pendingDates.size===0 || pendingHours.size===0) return;
+  state.dates = sortedUnique([...state.dates,...pendingDates]);
+  state.hours = [...new Set([...state.hours,...pendingHours])].sort((a,b)=>HOUR_ORDER.indexOf(a)-HOUR_ORDER.indexOf(b));
+  pendingDates.clear();
+  saveCurrent(); buildCalendar(); updateAddBtn(); renderTable();
+  showToast('Slots added!');
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NAME
+// ─────────────────────────────────────────────────────────────────────────────
+document.getElementById('btn-name').addEventListener('click', setName);
+document.getElementById('name-input').addEventListener('keydown', function(e){ if(e.key==='Enter') setName(); });
+function setName() {
+  const input = document.getElementById('name-input');
+  const name = input.value.trim();
+  if (!name) { showToast('Enter your name first'); return; }
+  if (!state.respondents.includes(name)) { state.respondents.push(name); state.responses[name]={}; }
+  activeName = name;
+  input.value = '';
+  document.getElementById('active-badge').textContent = 'Editing as: '+name;
+  saveCurrent(); renderTable();
+  showToast('Welcome '+name+'! Drag cells to mark your availability.');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CELL HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+function slotKey(d,h) { return d+'|'+h; }
+function getCell(name,d,h) { return (state.responses[name]&&state.responses[name][slotKey(d,h)])||'none'; }
+function setCell(name,d,h,v) { if(!state.responses[name]) state.responses[name]={}; state.responses[name][slotKey(d,h)]=v; }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HEATMAP
+// ─────────────────────────────────────────────────────────────────────────────
+function heatBg(d,h) {
+  const total = state.respondents.length;
+  if (!total) return '#f8fafc';
+  const av = state.respondents.filter(n=>getCell(n,d,h)==='available').length;
+  const mb = state.respondents.filter(n=>getCell(n,d,h)==='maybe').length;
+  const un = state.respondents.filter(n=>getCell(n,d,h)==='unavailable').length;
+  if (!av&&!mb&&!un) return '#f8fafc';
+  if (av===total) return '#bbf7d0';
+  if (av+mb===total&&!un) return '#fef9c3';
+  if (av>0&&!un) return '#d9f99d';
+  if (!av&&!mb&&un) return '#fef2f2';
+  return '#f8fafc';
+}
+
+function getBestSlots(date) {
+  const total = state.respondents.length;
+  if (total < 2) return [];
+  const out = [];
+  state.hours.forEach(h => {
+    const av = state.respondents.filter(n=>getCell(n,date,h)==='available').length;
+    const mb = state.respondents.filter(n=>getCell(n,date,h)==='maybe').length;
+    const un = state.respondents.filter(n=>getCell(n,date,h)==='unavailable').length;
+    if (av+mb+un < 2) return;
+    const label = ALL_HOURS.find(x=>x.v===h)?.l||h;
+    if (av===total)              out.push({label,score:'all', rank:total*10});
+    else if (av+mb===total&&!un) out.push({label,score:'good',rank:av*2+mb+4});
+  });
+  return out.sort((a,b)=>b.rank-a.rank).slice(0,5);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DRAG PAINT
+// ─────────────────────────────────────────────────────────────────────────────
+let drag = {active:false,paintState:null,cells:new Set()};
+
+const tableOuter = document.getElementById('table-outer');
+tableOuter.addEventListener('pointerdown', function(e) {
+  const td = e.target.closest('.av'); if (!td) return;
+  if (!activeName) { showToast('Enter your name first'); return; }
+  e.preventDefault();
+  this.setPointerCapture(e.pointerId);
+  const cur = getCell(activeName, td.dataset.d, td.dataset.h);
+  drag = {active:true, paintState:CYCLE[(CYCLE.indexOf(cur)+1)%CYCLE.length], cells:new Set()};
+  paintCell(td);
+}, {passive:false});
+tableOuter.addEventListener('pointermove', function(e) {
+  if (!drag.active) return;
+  const el = document.elementFromPoint(e.clientX,e.clientY); if(!el) return;
+  const td = el.closest && el.closest('.av'); if(!td) return;
+  const k = slotKey(td.dataset.d,td.dataset.h);
+  if (drag.cells.has(k)) return;
+  drag.cells.add(k);
+  paintCell(td);
+});
+tableOuter.addEventListener('pointerup',     endDrag);
+tableOuter.addEventListener('pointercancel', endDrag);
+
+function paintCell(td) {
+  const d=td.dataset.d, h=td.dataset.h;
+  setCell(activeName, d, h, drag.paintState);
+  td.style.background = heatBg(d,h);
+  const dot = td.querySelector('.rdot-me');
+  if (dot) dot.style.background = DOT_COLOR[drag.paintState]||'#e2e8f0';
+}
+
+function endDrag() {
+  if (!drag.active) return;
+  drag.active=false; drag.cells.clear();
+  saveCurrent(); renderTable();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// REMOVE
+// ─────────────────────────────────────────────────────────────────────────────
+function removeDate(date) { state.dates=state.dates.filter(d=>d!==date); saveCurrent(); renderTable(); }
+function removeRespondent(name) {
+  if (!confirm('Remove '+name+'?')) return;
+  state.respondents=state.respondents.filter(r=>r!==name);
+  delete state.responses[name];
+  if (activeName===name) { activeName=null; document.getElementById('active-badge').textContent=''; }
+  saveCurrent(); renderTable();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RENDER TABLE
+// ─────────────────────────────────────────────────────────────────────────────
+function renderTable() {
+  const outer = document.getElementById('table-outer');
+  document.getElementById('respondents-label').textContent =
+    state.respondents.length ? '— '+state.respondents.join(', ') : '';
+
+  if (!state.dates.length || !state.hours.length) {
+    outer.innerHTML='<div style="text-align:center;padding:38px;color:#94a3b8">Add dates &amp; time slots above to get started.</div>';
+    return;
+  }
+
+  // Respondent tabs
+  let tabs = '';
+  if (state.respondents.length) {
+    tabs = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">';
+    state.respondents.forEach(n => {
+      const me = n===activeName;
+      tabs += `<button class="btn btn-sm ${me?'btn-primary':'btn-ghost'}" data-act="sw" data-n="${escAttr(n)}">${escHtml(n)}</button>`;
+    });
+    tabs += `<button class="btn btn-sm btn-danger" data-act="remme" style="margin-left:auto">Remove me</button></div>`;
+  }
+
+  // Header
+  let head = `<tr><th class="th-corner"></th>`;
+  state.dates.forEach(date => {
+    const {weekday,short} = fmtDate(date);
+    head += `<th class="th-date"><span class="d-weekday">${weekday}</span><span class="d-short">${short}</span></th>`;
+  });
+  head += '</tr>';
+
+  // Data rows
+  let rows = '';
+  state.hours.forEach(hour => {
+    const lbl = ALL_HOURS.find(h=>h.v===hour)?.l||hour;
+    rows += `<tr><td class="td-time">${lbl}</td>`;
+    state.dates.forEach(date => {
+      const myS = activeName ? getCell(activeName,date,hour) : 'none';
+      const nAttr = activeName ? `data-n="${escAttr(activeName)}"` : '';
+      const bg = heatBg(date,hour);
+      const tip = state.respondents.map(n=>{ const s=getCell(n,date,hour); return s!=='none'?n+': '+s:null; }).filter(Boolean).join(' | ');
+      const dots = state.respondents.map(n => {
+        const s = getCell(n,date,hour);
+        const me = n===activeName;
+        return `<span class="rdot${me?' rdot-me':''}" style="background:${DOT_COLOR[s]||'#e2e8f0'}" title="${escAttr(n+': '+s)}"></span>`;
+      }).join('');
+      rows += `<td class="av" data-s="${myS}" data-d="${date}" data-h="${hour}" ${nAttr} style="background:${bg}" title="${escAttr(tip)}">${dots?`<div class="rdots">${dots}</div>`:''}</td>`;
+    });
+    rows += '</tr>';
+  });
+
+  // Footer best slots
+  let foot = '';
+  if (state.respondents.length > 1) {
+    foot = '<tr><td class="td-time td-sum-label">Best<br>slots</td>';
+    state.dates.forEach(date => {
+      const best = getBestSlots(date);
+      const inner = best.length
+        ? best.map(b=>`<span class="${b.score==='all'?'best-all':'best-good'}">${b.label}</span>`).join('')
+        : `<span style="color:#cbd5e1;font-size:.68rem">&mdash;</span>`;
+      foot += `<td class="sum-date-cell">${inner}</td>`;
+    });
+    foot += '</tr>';
+  }
+
+  outer.innerHTML = tabs + `<table><thead>${head}</thead><tbody>${rows}</tbody>${foot?`<tfoot>${foot}</tfoot>`:''}</table>`;
+
+  outer.querySelectorAll('[data-act]').forEach(el => {
+    el.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (this.dataset.act==='sw')    { activeName=this.dataset.n; document.getElementById('active-badge').textContent='Editing as: '+activeName; renderTable(); }
+      if (this.dataset.act==='remme') { if (activeName) removeRespondent(activeName); }
+
+    });
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SHARE
+// ─────────────────────────────────────────────────────────────────────────────
+document.getElementById('btn-copy').addEventListener('click', function() {
+  if (!state) return;
+  const encoded = btoa(encodeURIComponent(JSON.stringify(state)));
+  // Hash-based share: recipient opens link, poll is imported as a new copy
+  const url = location.origin + location.pathname + '?share=' + encoded + location.hash;
+  navigator.clipboard.writeText(url)
+    .then(()=>showToast('Link copied! Share it with your team.'))
+    .catch(()=>prompt('Copy this link:', url));
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TOAST
+// ─────────────────────────────────────────────────────────────────────────────
+let _tt;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(_tt); _tt = setTimeout(()=>el.classList.remove('show'), 2600);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escAttr(s){ return String(s).replace(/"/g,'&quot;'); }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BOOT
+// ─────────────────────────────────────────────────────────────────────────────
+route();
+</script>
+</body>
+</html>
