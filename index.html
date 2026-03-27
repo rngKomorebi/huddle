@@ -196,7 +196,7 @@ tfoot tr{border-top:2px solid #e4e1ed}
         <div class="leg-item"><div class="leg-dot av"></div><span>Available</span></div>
         <div class="leg-item"><div class="leg-dot mb"></div><span>Maybe</span></div>
         <div class="leg-item"><div class="leg-dot no"></div><span>No response</span></div>
-        <span class="text-on-surface-variant text-xs ml-1 opacity-70">Tap or drag to paint</span>
+        <span class="text-on-surface-variant text-xs ml-1 opacity-70">Cell = your pick &middot; Dots = all responses</span>
       </div>
     </div>
 
@@ -319,7 +319,25 @@ let currentPollId = null;
 window.addEventListener('hashchange', route);
 
 function route() {
-  const m = location.hash.match(/^#p=(.+)$/);
+  const h = location.hash;
+  if (h.startsWith('#share/')) {
+    const enc = h.slice(7);
+    try {
+      const b64 = enc.replace(/-/g, '+').replace(/_/g, '/');
+      const pad = b64 + '='.repeat((4 - b64.length % 4) % 4);
+      const imported = JSON.parse(decodeURIComponent(atob(pad)));
+      const id = genId();
+      const polls = loadAll();
+      polls[id] = { ...imported, createdAt: Date.now() };
+      saveAll(polls);
+      location.hash = '#p=' + id;
+    } catch(e) {
+      showToast('Could not import poll from link.');
+      location.hash = '';
+    }
+    return;
+  }
+  const m = h.match(/^#p=(.+)$/);
   if (m) {
     currentPollId = m[1];
     showPoll();
@@ -447,21 +465,6 @@ function saveCurrent() {
 // SHOW POLL
 // ─────────────────────────────────────────────────────────────────────────────
 function showPoll() {
-  // Attempt to load from share URL first
-  const sp = new URLSearchParams(location.search).get('share');
-  if (sp) {
-    try {
-      const imported = JSON.parse(decodeURIComponent(atob(sp)));
-      const polls = loadAll();
-      // import as a new poll if not already present
-      if (!polls[currentPollId]) {
-        polls[currentPollId] = { ...imported, createdAt: Date.now() };
-        saveAll(polls);
-        history.replaceState(null,'', location.pathname + location.hash);
-      }
-    } catch(e) {}
-  }
-
   const polls = loadAll();
   if (!polls[currentPollId]) { location.hash = ''; return; }
 
@@ -639,18 +642,14 @@ function getCell(name,d,h) { return (state.responses[name]&&state.responses[name
 function setCell(name,d,h,v) { if(!state.responses[name]) state.responses[name]={}; state.responses[name][slotKey(d,h)]=v; }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// HEATMAP
+// CELL BACKGROUND  (reflects the active user's own pick)
 // ─────────────────────────────────────────────────────────────────────────────
-function heatBg(d,h) {
-  const total = state.respondents.length;
-  if (!total) return '#f8fafc';
-  const av = state.respondents.filter(n=>getCell(n,d,h)==='available').length;
-  const mb = state.respondents.filter(n=>getCell(n,d,h)==='maybe').length;
-  if (!av&&!mb) return '#f8fafc';
-  if (av===total) return '#bbf7d0';
-  if (av+mb===total) return '#fef9c3';
-  if (av>0) return '#d9f99d';
-  return '#f8fafc';
+function cellBg(d,h) {
+  if (!activeName) return '#f6f2fa';
+  const s = getCell(activeName, d, h);
+  if (s === 'available') return '#bbf7d0';
+  if (s === 'maybe')     return '#fef9c3';
+  return '#f6f2fa';
 }
 
 function getBestSlots(date) {
@@ -698,7 +697,7 @@ tableOuter.addEventListener('pointercancel', endDrag);
 function paintCell(td) {
   const d=td.dataset.d, h=td.dataset.h;
   setCell(activeName, d, h, drag.paintState);
-  td.style.background = heatBg(d,h);
+  td.style.background = cellBg(d,h);
   const dot = td.querySelector('.rdot-me');
   if (dot) dot.style.background = DOT_COLOR[drag.paintState]||'#e2e8f0';
 }
@@ -761,7 +760,7 @@ function renderTable() {
     state.dates.forEach(date => {
       const myS = activeName ? getCell(activeName,date,hour) : 'none';
       const nAttr = activeName ? `data-n="${escAttr(activeName)}"` : '';
-      const bg = heatBg(date,hour);
+      const bg = cellBg(date,hour);
       const tip = state.respondents.map(n=>{ const s=getCell(n,date,hour); return s!=='none'?n+': '+s:null; }).filter(Boolean).join(' | ');
       const dots = state.respondents.map(n => {
         const s = getCell(n,date,hour);
@@ -804,9 +803,10 @@ function renderTable() {
 // ─────────────────────────────────────────────────────────────────────────────
 document.getElementById('btn-copy').addEventListener('click', function() {
   if (!state) return;
-  const encoded = btoa(encodeURIComponent(JSON.stringify(state)));
-  // Hash-based share: recipient opens link, poll is imported as a new copy
-  const url = location.origin + location.pathname + '?share=' + encoded + location.hash;
+  const b64 = btoa(encodeURIComponent(JSON.stringify(state)));
+  const safe = b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  const base = location.href.split('#')[0];
+  const url = base + '#share/' + safe;
   navigator.clipboard.writeText(url)
     .then(()=>showToast('Link copied! Share it with your team.'))
     .catch(()=>prompt('Copy this link:', url));
