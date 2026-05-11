@@ -325,7 +325,7 @@ function importShareData(enc) {
   const imported = JSON.parse(decodeURIComponent(atob(pad)));
   const id = genId();
   const polls = loadAll();
-  polls[id] = { ...imported, createdAt: Date.now() };
+  polls[id] = { respondents: [], responses: {}, ...imported, createdAt: Date.now() };
   saveAll(polls);
   return id;
 }
@@ -340,6 +340,7 @@ function route() {
       history.replaceState(null, '', location.pathname + '#p=' + id);
       currentPollId = id;
       showPoll();
+      showToast('Poll imported! Enter your name to add your availability.');
     } catch(e) {
       showToast('Could not import poll from link.');
       history.replaceState(null, '', location.pathname);
@@ -829,7 +830,9 @@ function renderTable() {
 document.getElementById('btn-copy').addEventListener('click', async function() {
   if (!state) return;
   const btn = this;
-  const b64 = btoa(encodeURIComponent(JSON.stringify(state)));
+  // Only share poll structure — omit respondent data to keep the URL short
+  const sharePayload = { title: state.title, dates: state.dates, hours: state.hours };
+  const b64 = btoa(encodeURIComponent(JSON.stringify(sharePayload)));
   const safe = b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
   const base = location.href.split('?')[0].split('#')[0];
   const longUrl = base + '?share=' + safe;
@@ -838,20 +841,31 @@ document.getElementById('btn-copy').addEventListener('click', async function() {
   const original = btn.innerHTML;
   btn.innerHTML = '<span class="material-symbols-outlined text-sm" style="animation:spin .7s linear infinite">progress_activity</span> Shortening…';
 
+  async function tryShorten(url) {
+    // Try shrtco.de (explicit CORS support)
+    try {
+      const r = await fetch('https://api.shrtco.de/v2/shorten?url=' + encodeURIComponent(url));
+      const j = await r.json();
+      if (j.ok && j.result && j.result.full_short_link) return j.result.full_short_link;
+    } catch(_) {}
+    // Try is.gd as fallback
+    try {
+      const r = await fetch('https://is.gd/create.php?format=simple&url=' + encodeURIComponent(url));
+      const t = (await r.text()).trim();
+      if (t.startsWith('http') && !t.includes('is.gd/error')) return t;
+    } catch(_) {}
+    return null;
+  }
+
   try {
-    // file:// pages can't make cross-origin fetch calls — skip shortener
     if (location.protocol === 'file:') throw new Error('local');
-    const apiUrl = 'https://is.gd/create.php?format=simple&url=' + encodeURIComponent(longUrl);
-    const res = await fetch(apiUrl);
-    if (!res.ok) throw new Error('API error');
-    const shortUrl = (await res.text()).trim();
-    if (!shortUrl.startsWith('http') || shortUrl.includes('is.gd/error')) throw new Error('Bad response');
+    const shortUrl = await tryShorten(longUrl);
+    if (!shortUrl) throw new Error('all shorteners failed');
     await navigator.clipboard.writeText(shortUrl).catch(() => prompt('Copy this short link:', shortUrl));
     showToast('Short link copied! Share it with your team.');
   } catch(e) {
-    // Fall back to full URL when running locally or shortener is unavailable
     await navigator.clipboard.writeText(longUrl).catch(() => prompt('Copy this link:', longUrl));
-    showToast(location.protocol === 'file:' ? 'Link copied! (Short links work once hosted online.)' : 'Link copied! (Shortener unavailable — full link used.)');
+    showToast(location.protocol === 'file:' ? 'Link copied! (Short links work once hosted online.)' : 'Link copied!');
   } finally {
     btn.disabled = false;
     btn.innerHTML = original;
