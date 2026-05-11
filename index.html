@@ -108,7 +108,6 @@ tfoot tr{border-top:2px solid #e4e1ed}
 /* ── TOAST ── */
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(14px);background:#32313b;color:#fcf8fe;padding:9px 18px;border-radius:22px;font-size:.82rem;font-weight:600;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body class="bg-surface text-on-surface min-h-screen flex flex-col">
@@ -827,49 +826,17 @@ function renderTable() {
 // ─────────────────────────────────────────────────────────────────────────────
 // SHARE
 // ─────────────────────────────────────────────────────────────────────────────
-document.getElementById('btn-copy').addEventListener('click', async function() {
+document.getElementById('btn-copy').addEventListener('click', function() {
   if (!state) return;
-  const btn = this;
-  // Only share poll structure — omit respondent data to keep the URL short
+  // Encode only poll structure (title, dates, hours) — omit responses to keep URL compact
   const sharePayload = { title: state.title, dates: state.dates, hours: state.hours };
   const b64 = btoa(encodeURIComponent(JSON.stringify(sharePayload)));
   const safe = b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
   const base = location.href.split('?')[0].split('#')[0];
-  const longUrl = base + '?share=' + safe;
-
-  btn.disabled = true;
-  const original = btn.innerHTML;
-  btn.innerHTML = '<span class="material-symbols-outlined text-sm" style="animation:spin .7s linear infinite">progress_activity</span> Shortening…';
-
-  async function tryShorten(url) {
-    // Try shrtco.de (explicit CORS support)
-    try {
-      const r = await fetch('https://api.shrtco.de/v2/shorten?url=' + encodeURIComponent(url));
-      const j = await r.json();
-      if (j.ok && j.result && j.result.full_short_link) return j.result.full_short_link;
-    } catch(_) {}
-    // Try is.gd as fallback
-    try {
-      const r = await fetch('https://is.gd/create.php?format=simple&url=' + encodeURIComponent(url));
-      const t = (await r.text()).trim();
-      if (t.startsWith('http') && !t.includes('is.gd/error')) return t;
-    } catch(_) {}
-    return null;
-  }
-
-  try {
-    if (location.protocol === 'file:') throw new Error('local');
-    const shortUrl = await tryShorten(longUrl);
-    if (!shortUrl) throw new Error('all shorteners failed');
-    await navigator.clipboard.writeText(shortUrl).catch(() => prompt('Copy this short link:', shortUrl));
-    showToast('Short link copied! Share it with your team.');
-  } catch(e) {
-    await navigator.clipboard.writeText(longUrl).catch(() => prompt('Copy this link:', longUrl));
-    showToast(location.protocol === 'file:' ? 'Link copied! (Short links work once hosted online.)' : 'Link copied!');
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = original;
-  }
+  const url = base + '?share=' + safe;
+  navigator.clipboard.writeText(url)
+    .then(() => showToast('Link copied! Share it with your team.'))
+    .catch(() => prompt('Copy this link:', url));
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
