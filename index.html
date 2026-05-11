@@ -108,6 +108,7 @@ tfoot tr{border-top:2px solid #e4e1ed}
 /* ── TOAST ── */
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(14px);background:#32313b;color:#fcf8fe;padding:9px 18px;border-radius:22px;font-size:.82rem;font-weight:600;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body class="bg-surface text-on-surface min-h-screen flex flex-col">
@@ -801,15 +802,36 @@ function renderTable() {
 // ─────────────────────────────────────────────────────────────────────────────
 // SHARE
 // ─────────────────────────────────────────────────────────────────────────────
-document.getElementById('btn-copy').addEventListener('click', function() {
+document.getElementById('btn-copy').addEventListener('click', async function() {
   if (!state) return;
+  const btn = this;
   const b64 = btoa(encodeURIComponent(JSON.stringify(state)));
   const safe = b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
   const base = location.href.split('#')[0];
-  const url = base + '#share/' + safe;
-  navigator.clipboard.writeText(url)
-    .then(()=>showToast('Link copied! Share it with your team.'))
-    .catch(()=>prompt('Copy this link:', url));
+  const longUrl = base + '#share/' + safe;
+
+  btn.disabled = true;
+  const original = btn.innerHTML;
+  btn.innerHTML = '<span class="material-symbols-outlined text-sm" style="animation:spin .7s linear infinite">progress_activity</span> Shortening…';
+
+  try {
+    // file:// pages can't make cross-origin fetch calls — skip shortener
+    if (location.protocol === 'file:') throw new Error('local');
+    const apiUrl = 'https://is.gd/create.php?format=simple&url=' + encodeURIComponent(longUrl);
+    const res = await fetch(apiUrl);
+    if (!res.ok) throw new Error('API error');
+    const shortUrl = (await res.text()).trim();
+    if (!shortUrl.startsWith('http') || shortUrl.includes('is.gd/error')) throw new Error('Bad response');
+    await navigator.clipboard.writeText(shortUrl).catch(() => prompt('Copy this short link:', shortUrl));
+    showToast('Short link copied! Share it with your team.');
+  } catch(e) {
+    // Fall back to full URL when running locally or shortener is unavailable
+    await navigator.clipboard.writeText(longUrl).catch(() => prompt('Copy this link:', longUrl));
+    showToast(location.protocol === 'file:' ? 'Link copied! (Short links work once hosted online.)' : 'Link copied! (Shortener unavailable — full link used.)');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = original;
+  }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
