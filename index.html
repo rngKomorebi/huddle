@@ -319,18 +319,41 @@ let currentPollId = null;
 
 window.addEventListener('hashchange', route);
 
+function importShareData(enc) {
+  const b64 = enc.replace(/-/g, '+').replace(/_/g, '/');
+  const pad = b64 + '='.repeat((4 - b64.length % 4) % 4);
+  const imported = JSON.parse(decodeURIComponent(atob(pad)));
+  const id = genId();
+  const polls = loadAll();
+  polls[id] = { ...imported, createdAt: Date.now() };
+  saveAll(polls);
+  return id;
+}
+
 function route() {
+  // ?share=DATA  — query-string based (shortener-friendly, new format)
+  const params = new URLSearchParams(location.search);
+  const shareParam = params.get('share');
+  if (shareParam) {
+    try {
+      const id = importShareData(shareParam);
+      history.replaceState(null, '', location.pathname + '#p=' + id);
+      currentPollId = id;
+      showPoll();
+    } catch(e) {
+      showToast('Could not import poll from link.');
+      history.replaceState(null, '', location.pathname);
+      showHome();
+    }
+    return;
+  }
+
+  // #share/DATA  — legacy hash-based format
   const h = location.hash;
   if (h.startsWith('#share/')) {
     const enc = h.slice(7);
     try {
-      const b64 = enc.replace(/-/g, '+').replace(/_/g, '/');
-      const pad = b64 + '='.repeat((4 - b64.length % 4) % 4);
-      const imported = JSON.parse(decodeURIComponent(atob(pad)));
-      const id = genId();
-      const polls = loadAll();
-      polls[id] = { ...imported, createdAt: Date.now() };
-      saveAll(polls);
+      const id = importShareData(enc);
       location.hash = '#p=' + id;
     } catch(e) {
       showToast('Could not import poll from link.');
@@ -338,6 +361,7 @@ function route() {
     }
     return;
   }
+
   const m = h.match(/^#p=(.+)$/);
   if (m) {
     currentPollId = m[1];
@@ -807,8 +831,8 @@ document.getElementById('btn-copy').addEventListener('click', async function() {
   const btn = this;
   const b64 = btoa(encodeURIComponent(JSON.stringify(state)));
   const safe = b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-  const base = location.href.split('#')[0];
-  const longUrl = base + '#share/' + safe;
+  const base = location.href.split('?')[0].split('#')[0];
+  const longUrl = base + '?share=' + safe;
 
   btn.disabled = true;
   const original = btn.innerHTML;
