@@ -318,42 +318,44 @@ let currentPollId = null;
 
 window.addEventListener('hashchange', route);
 
-function importShareData(enc) {
-  const b64 = enc.replace(/-/g, '+').replace(/_/g, '/');
-  const pad = b64 + '='.repeat((4 - b64.length % 4) % 4);
-  const imported = JSON.parse(decodeURIComponent(atob(pad)));
-  const id = genId();
-  const polls = loadAll();
-  polls[id] = { ...imported, createdAt: Date.now() };
-  saveAll(polls);
-  return id;
-}
-
 function route() {
-  // ?share=DATA  — query-string based (shortener-friendly, new format)
-  const params = new URLSearchParams(location.search);
-  const shareParam = params.get('share');
-  if (shareParam) {
-    try {
-      const id = importShareData(shareParam);
-      history.replaceState(null, '', location.pathname + '#p=' + id);
-      currentPollId = id;
-      showPoll();
-      showToast('Poll imported! Enter your name to add your availability.');
-    } catch(e) {
-      showToast('Could not import poll from link.');
-      history.replaceState(null, '', location.pathname);
-      showHome();
-    }
-    return;
-  }
-
-  // #share/DATA  — legacy hash-based format
   const h = location.hash;
   if (h.startsWith('#share/')) {
     const enc = h.slice(7);
     try {
-      const id = importShareData(enc);
+      const b64 = enc.replace(/-/g, '+').replace(/_/g, '/');
+      const pad = b64 + '='.repeat((4 - b64.length % 4) % 4);
+      const raw = atob(pad);
+      let parsed;
+      try { parsed = JSON.parse(decodeURIComponent(escape(raw))); }
+      catch(e) { parsed = JSON.parse(decodeURIComponent(raw)); }
+      let imported;
+      if (Array.isArray(parsed)) {
+        // compact v2: [title, dayNums, hourIndices, [[name, availStr], ...]]
+        const [title, days, hIdx, r] = parsed;
+        const dates = days.map(n => new Date(SHARE_EPOCH + n * 86400000).toISOString().slice(0, 10));
+        const hours = hIdx.map(i => HOUR_ORDER[i]);
+        const respondents = r.map(([n]) => n);
+        const responses = {};
+        for (const [name, avail] of r) {
+          responses[name] = {};
+          let i = 0;
+          for (const date of dates) {
+            for (const hour of hours) {
+              const v = avail[i++];
+              if (v === '2') responses[name][slotKey(date, hour)] = 'available';
+              else if (v === '1') responses[name][slotKey(date, hour)] = 'maybe';
+            }
+          }
+        }
+        imported = { title, dates, hours, respondents, responses };
+      } else {
+        imported = parsed;
+      }
+      const id = genId();
+      const polls = loadAll();
+      polls[id] = { ...imported, createdAt: Date.now() };
+      saveAll(polls);
       location.hash = '#p=' + id;
     } catch(e) {
       showToast('Could not import poll from link.');
@@ -361,7 +363,6 @@ function route() {
     }
     return;
   }
-
   const m = h.match(/^#p=(.+)$/);
   if (m) {
     currentPollId = m[1];
@@ -826,15 +827,27 @@ function renderTable() {
 // ─────────────────────────────────────────────────────────────────────────────
 // SHARE
 // ─────────────────────────────────────────────────────────────────────────────
+const SHARE_EPOCH = new Date('2020-01-01').getTime();
+function encodeShareState(s) {
+  // compact: [title, [dayNums], [hourIndices], [[name, "0120..."], ...]]
+  const days = s.dates.map(d => Math.round((new Date(d) - SHARE_EPOCH) / 86400000));
+  const hIdx = s.hours.map(h => HOUR_ORDER.indexOf(h));
+  const r = s.respondents.map(name => [
+    name,
+    s.dates.flatMap(date => s.hours.map(hour => {
+      const v = s.responses[name]?.[slotKey(date, hour)];
+      return v === 'available' ? '2' : v === 'maybe' ? '1' : '0';
+    })).join('')
+  ]);
+  return btoa(unescape(encodeURIComponent(JSON.stringify([s.title, days, hIdx, r]))));
+}
 document.getElementById('btn-copy').addEventListener('click', function() {
   if (!state) return;
-  const b64 = btoa(encodeURIComponent(JSON.stringify(state)));
-  const safe = b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-  const base = location.href.split('?')[0].split('#')[0];
-  const url = base + '?share=' + safe;
+  const safe = encodeShareState(state).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  const url = location.href.split('#')[0] + '#share/' + safe;
   navigator.clipboard.writeText(url)
-    .then(() => showToast('Link copied! Share it with your team.'))
-    .catch(() => prompt('Copy this link:', url));
+    .then(()=>showToast('Link copied! Share it with your team.'))
+    .catch(()=>prompt('Copy this link:', url));
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
