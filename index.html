@@ -324,7 +324,7 @@ function importShareData(enc) {
   const imported = JSON.parse(decodeURIComponent(atob(pad)));
   const id = genId();
   const polls = loadAll();
-  polls[id] = { respondents: [], responses: {}, ...imported, createdAt: Date.now() };
+  polls[id] = { ...imported, createdAt: Date.now() };
   saveAll(polls);
   return id;
 }
@@ -828,9 +828,7 @@ function renderTable() {
 // ─────────────────────────────────────────────────────────────────────────────
 document.getElementById('btn-copy').addEventListener('click', function() {
   if (!state) return;
-  // Encode only poll structure (title, dates, hours) — omit responses to keep URL compact
-  const sharePayload = { title: state.title, dates: state.dates, hours: state.hours };
-  const b64 = btoa(encodeURIComponent(JSON.stringify(sharePayload)));
+  const b64 = btoa(encodeURIComponent(JSON.stringify(state)));
   const safe = b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
   const base = location.href.split('?')[0].split('#')[0];
   const url = base + '?share=' + safe;
