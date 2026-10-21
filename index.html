@@ -4,35 +4,14 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Huddle</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<!-- Built from src/tailwind.css by `npm run build:css` — rebuild after changing Tailwind classes. -->
+<link rel="stylesheet" href="styles.css"/>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@400,0&display=swap" rel="stylesheet"/>
-<script>
-tailwind.config = {
-  theme: {
-    extend: {
-      colors: {
-        primary:     '#4e45e2',
-        'primary-dim':'#4136d6',
-        'on-primary':'#fbf7ff',
-        'primary-container':'#e8e7ff',
-        surface:     '#fcf8fe',
-        'surface-low':'#f6f2fa',
-        'surface-high':'#eae6f1',
-        'surface-highest':'#e4e1ed',
-        'on-surface':'#32313b',
-        'on-surface-variant':'#7b7984',
-        outline:     '#b3b0bc',
-        tertiary:    '#755478',
-        'tertiary-container':'#fdd2fd',
-        'on-tertiary-container':'#654568',
-      },
-      fontFamily: { sans: ['Manrope','sans-serif'] },
-      borderRadius: { xl:'0.75rem', '2xl':'1rem', '3xl':'1.5rem' },
-    }
-  }
-}
-</script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Manrope', sans-serif; -webkit-user-select: none; user-select: none; }
@@ -59,16 +38,18 @@ body { font-family: 'Manrope', sans-serif; -webkit-user-select: none; user-selec
 .chip{border:none;border-radius:20px;padding:3px 10px;font-size:.74rem;font-weight:600;cursor:pointer;transition:all .12s}
 .chip-date{background:#e8e7ff;color:#4e45e2}.chip-date:hover{background:#c7c5f8}
 
-/* ── HOUR GRID ── */
+/* ── TIME SLOT SETUP ── */
 .setup-row{display:grid;grid-template-columns:330px 1fr;gap:18px;align-items:start}
 @media(max-width:780px){.setup-row{grid-template-columns:1fr}}
 .hour-section h3{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#7b7984;margin-bottom:8px}
-.hour-quick{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px}
-.hour-grid{display:flex;flex-wrap:wrap;gap:5px}
-.hour-btn{border:1.5px solid #e4e1ed;background:#fff;border-radius:20px;padding:5px 11px;font-size:.76rem;font-weight:500;cursor:pointer;color:#7b7984;transition:all .13s}
-.hour-btn:hover{border-color:#4e45e2;color:#4e45e2}
-.hour-btn.active{background:#4e45e2;border-color:#4e45e2;color:#fff}
-.add-row{display:flex;justify-content:flex-end;margin-top:13px;gap:8px;align-items:center}
+.hour-quick{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.time-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:.8rem;font-weight:600;color:#7b7984}
+.time-row label{display:flex;align-items:center;gap:6px}
+.select-sm{border:1.5px solid #e4e1ed;background-color:#fff;border-radius:8px;padding:5px 30px 5px 9px;font-size:.8rem;font-weight:600;color:#32313b;font-family:'Manrope',sans-serif;outline:none}
+.select-sm:focus{border-color:#4e45e2;box-shadow:none}
+input.select-sm{padding-right:9px}
+.setup-hint{font-size:.74rem;color:#7b7984;margin-top:8px;line-height:1.45}
+.add-row{display:flex;justify-content:flex-end;margin-top:18px;gap:8px;align-items:center}
 
 /* ── AVAILABILITY TABLE ── */
 .table-outer{overflow-x:auto;-webkit-overflow-scrolling:touch}
@@ -79,8 +60,18 @@ table th,table td{padding:0}
 .th-date .d-weekday{display:block;font-size:.67rem;font-weight:600;color:#b3b0bc;margin-bottom:1px}
 .th-date .d-short{display:block;font-size:.81rem;font-weight:700;color:#32313b}
 .td-time{width:70px;min-width:70px;font-size:.71rem;font-weight:600;color:#b3b0bc;text-align:right;padding:0 7px 0 0;vertical-align:middle;white-space:nowrap;background:#fff;position:sticky;left:0;z-index:2;border-right:2px solid #e4e1ed;height:38px}
-.av{width:64px;min-width:64px;height:38px;border-right:1px solid #eae6f1;border-bottom:1px solid #eae6f1;cursor:crosshair;position:relative;transition:background .1s;touch-action:none}
+.av,.av-off{width:64px;min-width:64px;height:38px;border-right:1px solid #eae6f1;border-bottom:1px solid #eae6f1;position:relative}
+.av{cursor:crosshair;transition:background .1s;touch-action:none}
 .av:hover{outline:2px solid #a5a3f8;outline-offset:-2px;z-index:1}
+.av-off{background:repeating-linear-gradient(45deg,#fff,#fff 4px,#f6f2fa 4px,#f6f2fa 8px)}
+table.s30 .av,table.s30 .av-off,table.s30 .td-time{height:28px}
+table.s15 .av,table.s15 .av-off,table.s15 .td-time{height:22px}
+table.s15 .td-time{font-size:.64rem}
+.av.av-final{box-shadow:inset 0 0 0 3px #4e45e2}
+.closed .av{cursor:default}
+.closed .av:hover{outline:none}
+.picking .av{cursor:pointer}
+.picking .av:hover{outline:3px solid #4e45e2}
 .rdots{position:absolute;bottom:3px;left:0;right:0;display:flex;justify-content:center;gap:2px;pointer-events:none}
 .rdot{width:7px;height:7px;border-radius:50%;border:1px solid rgba(255,255,255,.7);flex-shrink:0}
 .rdot-me{width:8px;height:8px;border:2px solid #fff;box-shadow:0 0 0 1.5px rgba(0,0,0,.22)}
@@ -89,6 +80,8 @@ tfoot tr{border-top:2px solid #e4e1ed}
 .sum-date-cell{text-align:center;padding:5px 3px;vertical-align:middle;border-right:1px solid #eae6f1}
 .best-all{display:inline-block;background:#bbf7d0;color:#15803d;border-radius:4px;padding:1px 5px;font-size:.7rem;font-weight:700;margin:1px}
 .best-good{display:inline-block;background:#fef9c3;color:#92400e;border-radius:4px;padding:1px 5px;font-size:.7rem;font-weight:600;margin:1px}
+.best-click{cursor:pointer}
+.best-click:hover{outline:2px solid #4e45e2}
 
 /* ── LEGEND ── */
 .legend{display:flex;gap:13px;flex-wrap:wrap;font-size:.78rem;color:#7b7984;align-items:center}
@@ -104,6 +97,7 @@ tfoot tr{border-top:2px solid #e4e1ed}
 .modal-label{display:block;font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#7b7984;margin-bottom:6px}
 .modal-name-input{border:1.5px solid #e4e1ed;border-radius:10px;padding:10px 14px;font-size:.97rem;font-weight:600;outline:none;transition:border-color .15s;width:100%;background:#fff;font-family:'Manrope',sans-serif}
 .modal-name-input:focus{border-color:#4e45e2}
+#qr-box svg{width:100%;height:100%}
 
 /* ── TOAST ── */
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(14px);background:#32313b;color:#fcf8fe;padding:9px 18px;border-radius:22px;font-size:.82rem;font-weight:600;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:999}
@@ -154,6 +148,9 @@ tfoot tr{border-top:2px solid #e4e1ed}
 <div id="poll-view" style="display:none">
   <main class="max-w-5xl mx-auto w-full px-5 py-6 pb-24 flex flex-col gap-4">
 
+    <!-- Status card: final meeting time / voting deadline (filled by renderStatus) -->
+    <div id="status-card" style="display:none"></div>
+
     <!-- Name card -->
     <div class="bg-surface-lowest rounded-2xl border border-outline/20 shadow-sm p-5">
       <div class="text-xs font-bold uppercase tracking-widest text-on-surface-variant opacity-60 mb-3">Your Name</div>
@@ -162,11 +159,15 @@ tfoot tr{border-top:2px solid #e4e1ed}
           class="border border-outline/40 rounded-xl px-3 py-2 text-sm font-semibold outline-none transition-colors focus:border-primary min-w-44 bg-white font-[Manrope]"/>
         <button id="btn-name"
           class="bg-primary text-on-primary px-4 py-2 rounded-xl text-sm font-bold hover:opacity-90 active:scale-95 transition-all">
-          Set name
+          Join poll
         </button>
         <span id="active-badge" class="text-sm font-semibold text-primary"></span>
+        <button id="btn-edit-link" style="display:none" title="Open this private link on your phone or another computer to edit your answer there."
+          class="ml-auto flex items-center gap-1.5 text-xs font-bold text-primary bg-primary-container px-3 py-2 rounded-xl hover:opacity-80 active:scale-95 transition-all">
+          <span class="material-symbols-outlined text-sm">devices</span> Edit on another device
+        </button>
       </div>
-      <p class="mt-2 text-xs text-on-surface-variant">Enter your name, then drag across cells to mark your availability.</p>
+      <p id="name-hint" class="mt-2 text-xs text-on-surface-variant">Enter your name, then drag across cells to mark your availability.</p>
     </div>
 
     <!-- Availability card -->
@@ -175,17 +176,32 @@ tfoot tr{border-top:2px solid #e4e1ed}
         <div class="text-xs font-bold uppercase tracking-widest text-on-surface-variant opacity-60">
           Availability <span id="respondents-label" class="normal-case tracking-normal font-normal opacity-100 text-on-surface-variant text-[0.77rem]"></span>
         </div>
-        <button id="btn-copy"
-          class="flex items-center gap-1.5 bg-primary text-on-primary text-xs font-bold px-3 py-1.5 rounded-xl hover:opacity-90 active:scale-95 transition-all">
-          <span class="material-symbols-outlined text-sm">link</span> Copy share link
-        </button>
+        <div class="flex items-center gap-2 flex-wrap">
+          <button id="btn-pick" style="display:none"
+            class="flex items-center gap-1.5 bg-primary-container text-primary text-xs font-bold px-3 py-1.5 rounded-xl hover:opacity-80 active:scale-95 transition-all">
+            <span class="material-symbols-outlined text-sm">event_available</span> <span id="btn-pick-label">Pick final time</span>
+          </button>
+          <button id="btn-qr" title="Show QR code"
+            class="flex items-center gap-1.5 bg-primary-container text-primary text-xs font-bold px-3 py-1.5 rounded-xl hover:opacity-80 active:scale-95 transition-all">
+            <span class="material-symbols-outlined text-sm">qr_code_2</span> QR
+          </button>
+          <button id="btn-copy"
+            class="flex items-center gap-1.5 bg-primary text-on-primary text-xs font-bold px-3 py-1.5 rounded-xl hover:opacity-90 active:scale-95 transition-all">
+            <span class="material-symbols-outlined text-sm">share</span> Share link
+          </button>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 mb-3 text-xs text-on-surface-variant">
+        <span class="material-symbols-outlined text-sm">schedule</span>
+        <span id="tz-note"></span>
+        <select id="tz-select" class="select-sm" style="display:none"></select>
       </div>
       <div class="table-outer" id="table-outer">
         <div class="text-center py-10 text-on-surface-variant text-sm">No time slots configured for this poll.</div>
       </div>
       <p class="mt-3 text-xs text-on-surface-variant flex items-center gap-1">
-        <span class="material-symbols-outlined text-sm">lock</span>
-        Polls are stored locally on this device. Use the share link to open on another device.
+        <span class="material-symbols-outlined text-sm">groups</span>
+        Anyone with the link can add their availability. Changes appear live for everyone.
       </p>
     </div>
 
@@ -238,13 +254,25 @@ tfoot tr{border-top:2px solid #e4e1ed}
       </div>
       <div class="hour-section">
         <h3>Time Slots</h3>
-        <div class="hour-quick">
-          <button class="btn-ghost-sm" id="h-all">All hours</button>
-          <button class="btn-ghost-sm" id="h-biz">Business (9–5)</button>
-          <button class="btn-ghost-sm" id="h-eve">Evening (5–10)</button>
-          <button class="btn-ghost-sm" id="h-none">None</button>
+        <div class="hour-quick" id="time-presets">
+          <button class="btn-ghost-sm" data-preset="09:00-17:00">Business (9–5)</button>
+          <button class="btn-ghost-sm" data-preset="08:00-20:00">Daytime (8–8)</button>
+          <button class="btn-ghost-sm" data-preset="17:00-22:00">Evening (5–10)</button>
+          <button class="btn-ghost-sm" data-preset="00:00-24:00">All day</button>
         </div>
-        <div class="hour-grid" id="hour-grid"></div>
+        <div class="time-row">
+          <label>From <select id="t-from" class="select-sm"></select></label>
+          <label>to <select id="t-to" class="select-sm"></select></label>
+          <label>every <select id="t-step" class="select-sm">
+            <option value="60">1 hour</option><option value="30">30 min</option><option value="15">15 min</option>
+          </select></label>
+        </div>
+        <p class="setup-hint" id="t-hint"></p>
+
+        <h3 style="margin-top:18px">Voting closes <span style="text-transform:none;letter-spacing:0;font-weight:500">(optional)</span></h3>
+        <input type="datetime-local" id="t-deadline" class="select-sm"/>
+        <p class="setup-hint">After this, nobody can change their answers. You can still pick the final time.</p>
+
         <div class="add-row">
           <button class="btn-ghost-sm" id="modal-cancel">Cancel</button>
           <button id="btn-create-poll" disabled
@@ -255,6 +283,45 @@ tfoot tr{border-top:2px solid #e4e1ed}
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- FINAL TIME MODAL -->
+<div id="final-modal" class="modal-bg" style="display:none">
+  <div class="modal-box" style="max-width:440px">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-extrabold text-on-surface">Set meeting time</h2>
+      <button id="final-close" class="text-on-surface-variant hover:bg-surface-high rounded-xl p-1.5 transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="modal-label">Starts</div>
+    <p id="final-when" class="font-bold text-on-surface mb-4"></p>
+    <label class="modal-label" for="final-dur">Duration</label>
+    <select id="final-dur" class="select-sm mb-4"></select>
+    <div id="final-who" class="text-xs text-on-surface-variant leading-relaxed"></div>
+    <p class="setup-hint">Setting the time closes voting and shows everyone an "Add to calendar" button.</p>
+    <div class="add-row">
+      <button class="btn-ghost-sm" id="final-cancel">Cancel</button>
+      <button id="final-save"
+        class="flex items-center gap-2 bg-primary text-on-primary px-5 py-2.5 rounded-xl font-bold text-sm hover:opacity-90 active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-base">event_available</span> Set meeting time
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- QR MODAL -->
+<div id="qr-modal" class="modal-bg" style="display:none">
+  <div class="modal-box" style="max-width:380px">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-extrabold text-on-surface">Scan to vote</h2>
+      <button id="qr-close" class="text-on-surface-variant hover:bg-surface-high rounded-xl p-1.5 transition-colors">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div id="qr-box" style="width:260px;height:260px;margin:0 auto" class="flex items-center justify-center text-sm text-on-surface-variant"></div>
+    <p id="qr-url" class="text-xs text-on-surface-variant text-center mt-3 break-all" style="user-select:text"></p>
   </div>
 </div>
 
@@ -282,88 +349,209 @@ tfoot tr{border-top:2px solid #e4e1ed}
 // ─────────────────────────────────────────────────────────────────────────────
 // CONSTANTS
 // ─────────────────────────────────────────────────────────────────────────────
-const ALL_HOURS = [
-  {v:'06:00',l:'6 AM'},{v:'07:00',l:'7 AM'},{v:'08:00',l:'8 AM'},
-  {v:'09:00',l:'9 AM'},{v:'10:00',l:'10 AM'},{v:'11:00',l:'11 AM'},
-  {v:'12:00',l:'12 PM'},{v:'13:00',l:'1 PM'},{v:'14:00',l:'2 PM'},
-  {v:'15:00',l:'3 PM'},{v:'16:00',l:'4 PM'},{v:'17:00',l:'5 PM'},
-  {v:'18:00',l:'6 PM'},{v:'19:00',l:'7 PM'},{v:'20:00',l:'8 PM'},
-  {v:'21:00',l:'9 PM'},{v:'22:00',l:'10 PM'},
-];
-const HOUR_ORDER = ALL_HOURS.map(h => h.v);
-const BIZ = ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
-const EVE = ['17:00','18:00','19:00','20:00','21:00','22:00'];
+// Hour list used by old "#share/" links (they stored indices into it).
+const LEGACY_HOURS = ['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00',
+                      '15:00','16:00','17:00','18:00','19:00','20:00','21:00','22:00'];
 const CYCLE = ['none','available','maybe'];
 const DOT_COLOR = {none:'#e2e8f0',available:'#4ade80',maybe:'#facc15'};
 const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const STORE_KEY = 'huddle_polls';
+const DURATIONS = [15,30,45,60,90,120,150,180,240,300,360,480];
+const QR_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
+const MY_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+const H12 = !!new Intl.DateTimeFormat([], {hour: 'numeric'}).resolvedOptions().hour12;
+
+const INDEX_KEY  = 'huddle_index';     // polls this browser has created or opened
+const LEGACY_KEY = 'huddle_polls';     // pre-backend polls that lived only in localStorage
+const MIGRATED_KEY = 'huddle_migrated';
+const NAME_KEY   = 'huddle_name';
+const KEYS_KEY   = 'huddle_keys';      // {pollId: {voter, token}} for edit links
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MULTI-POLL STORAGE
+// BACKEND CONFIG  — paste your Firebase web-app config here (see README → Setup)
 // ─────────────────────────────────────────────────────────────────────────────
-function loadAll() {
-  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch(e) { return {}; }
+const FIREBASE_CONFIG = {
+  apiKey: 'AIzaSyAw0c-5ArpndIar_pmXukIqJztG2bD4wyo',
+  authDomain: 'huddle-9d3f6.firebaseapp.com',
+  databaseURL: 'https://huddle-9d3f6-default-rtdb.europe-west1.firebasedatabase.app',
+  projectId: 'huddle-9d3f6',
+  appId: '1:205350028144:web:0e64dbf27ca2e80fe605b5',
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BACKEND  (Firebase Realtime Database)
+//   polls/{id}/meta              {title, dates, hours, step, tz, owner, createdAt, deadline?, final?: {key, minutes}}
+//   polls/{id}/responses/{voter} {name, slots: {"YYYY-MM-DD|HH:MM": "available"|"maybe"}, joinedAt, updatedAt}
+//   secrets/{id}/{voter}         edit-link token (readable only by that voter)
+//   claims/{id}/{uid}            {voter, token} — lets another device act as {voter}
+// Every browser signs in anonymously; its uid is its voter id, so a returning
+// voter edits their own entry instead of creating a duplicate. Slot keys are
+// wall-clock times in the poll's time zone (meta.tz).
+// ─────────────────────────────────────────────────────────────────────────────
+let db = null, uid = null;
+
+async function initBackend() {
+  if (typeof firebase === 'undefined') throw new Error('sdk');
+  if (!FIREBASE_CONFIG.apiKey || !FIREBASE_CONFIG.databaseURL) throw new Error('config');
+  firebase.initializeApp(FIREBASE_CONFIG);
+  db = firebase.database();
+  uid = await new Promise((resolve, reject) => {
+    const off = firebase.auth().onAuthStateChanged(u => {
+      if (u) { off(); resolve(u.uid); }
+      else firebase.auth().signInAnonymously().catch(reject);
+    });
+  });
 }
-function saveAll(polls) {
-  try { localStorage.setItem(STORE_KEY, JSON.stringify(polls)); } catch(e) {}
+
+function pollRef(id) { return db.ref('polls/' + id); }
+
+function randomId(n) {
+  const abc = 'abcdefghijkmnpqrstuvwxyz23456789';
+  return [...crypto.getRandomValues(new Uint8Array(n))].map(b => abc[b % abc.length]).join('');
 }
-function genId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+function genId() { return randomId(8); }
+
+async function createPoll({title, dates, hours, step = 60, tz = MY_TZ, deadline = null, entries = [], createdAt = Date.now()}) {
+  const id = genId();
+  const meta = {title, dates, hours, step, tz, owner: uid, createdAt};
+  if (deadline) meta.deadline = deadline;
+  await pollRef(id).child('meta').set(meta);
+  if (entries.length) {
+    const upd = {};
+    entries.forEach((e, i) => { upd[genId()] = {name: e.name, slots: e.slots, joinedAt: createdAt + i, updatedAt: Date.now()}; });
+    await pollRef(id).child('responses').update(upd);
+  }
+  rememberPoll(id, meta, entries.length);
+  return id;
+}
+
+async function deletePollRemote(id) {
+  const snap = await pollRef(id).child('responses').once('value');
+  const upd = {meta: null};
+  snap.forEach(c => { upd['responses/' + c.key] = null; });
+  await pollRef(id).update(upd);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ROUTER  (hash-based: #  = home,  #p=ID = poll)
+// EDIT LINKS  (use your answer from another device)
+// ─────────────────────────────────────────────────────────────────────────────
+function myKey(pid) { return loadJSON(KEYS_KEY)[pid] || null; }
+function saveKey(pid, k) { const keys = loadJSON(KEYS_KEY); keys[pid] = k; saveJSON(KEYS_KEY, keys); }
+// The voter id this browser acts as in a poll: its own uid, or one claimed via an edit link.
+function voterFor(pid) { const k = myKey(pid); return k ? k.voter : uid; }
+
+async function editLink() {
+  const pid = currentPollId;
+  let k = myKey(pid);
+  if (!k) {
+    const ref = db.ref('secrets/' + pid + '/' + uid);
+    let token = (await ref.once('value')).val();
+    if (!token) { token = randomId(20); await ref.set(token); }
+    k = {voter: uid, token};
+    saveKey(pid, k);
+  }
+  return baseUrl() + '?p=' + pid + '&e=' + k.voter + '.' + k.token;
+}
+
+async function claimEditLink(pid, e) {
+  const [voter, token] = e.split('.');
+  if (!voter || !token || voter === uid) return;
+  try {
+    await db.ref('claims/' + pid + '/' + uid).set({voter, token});
+    saveKey(pid, {voter, token});
+    showToast('This device can now edit your answer.');
+  } catch(err) {
+    showToast('This edit link is not valid.');
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LOCAL INDEX  (only a list of known polls; the data itself lives in the backend)
+// ─────────────────────────────────────────────────────────────────────────────
+function loadJSON(key) {
+  try { return JSON.parse(localStorage.getItem(key)) || {}; } catch(e) { return {}; }
+}
+function saveJSON(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+}
+function rememberPoll(id, meta, nResp) {
+  const idx = loadJSON(INDEX_KEY);
+  idx[id] = {title: meta.title, createdAt: meta.createdAt, nDates: (meta.dates||[]).length, nResp,
+             mine: meta.owner === uid || meta.owner === voterFor(id), final: !!meta.final};
+  saveJSON(INDEX_KEY, idx);
+}
+function forgetPoll(id) {
+  const idx = loadJSON(INDEX_KEY);
+  delete idx[id];
+  saveJSON(INDEX_KEY, idx);
+}
+
+// Old format: {title, dates, hours, respondents:[name], responses:{name:{slot:state}}}
+function fromLegacy(p) {
+  const entries = (p.respondents || []).map(name => {
+    const slots = {};
+    Object.entries((p.responses || {})[name] || {}).forEach(([k, v]) => { if (v !== 'none') slots[k] = v; });
+    return {name, slots};
+  });
+  return {title: p.title || 'Untitled poll', dates: p.dates || [], hours: p.hours || [], entries, createdAt: p.createdAt || Date.now()};
+}
+
+// Upload polls created before the shared backend existed, once per browser.
+async function migrateLegacy() {
+  const legacy = loadJSON(LEGACY_KEY);
+  const done = loadJSON(MIGRATED_KEY);
+  for (const [oldId, p] of Object.entries(legacy)) {
+    if (done[oldId] || !(p.dates || []).length) continue;
+    try {
+      done[oldId] = await createPoll(fromLegacy(p));
+      saveJSON(MIGRATED_KEY, done);
+    } catch(e) {}
+  }
+}
+
+// Decode an old "#share/<base64>" link into the legacy poll format.
+function decodeLegacyShare(enc) {
+  const b64 = enc.replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(b64 + '='.repeat((4 - b64.length % 4) % 4));
+  let parsed;
+  try { parsed = JSON.parse(decodeURIComponent(escape(raw))); }
+  catch(e) { parsed = JSON.parse(decodeURIComponent(raw)); }
+  if (!Array.isArray(parsed)) return parsed;
+  // compact v2: [title, dayNums, hourIndices, [[name, availStr], ...]]
+  const SHARE_EPOCH = new Date('2020-01-01').getTime();
+  const [title, days, hIdx, r] = parsed;
+  const dates = days.map(n => new Date(SHARE_EPOCH + n * 86400000).toISOString().slice(0, 10));
+  const hours = hIdx.map(i => LEGACY_HOURS[i]);
+  const responses = {};
+  for (const [name, avail] of r) {
+    responses[name] = {};
+    let i = 0;
+    for (const date of dates) for (const hour of hours) {
+      const v = avail[i++];
+      if (v === '2') responses[name][slotKey(date, hour)] = 'available';
+      else if (v === '1') responses[name][slotKey(date, hour)] = 'maybe';
+    }
+  }
+  return {title, dates, hours, respondents: r.map(([n]) => n), responses};
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ROUTER  (# = home,  #p=ID = poll;  share links use ?p=ID)
 // ─────────────────────────────────────────────────────────────────────────────
 let currentPollId = null;
 
-window.addEventListener('hashchange', route);
-
-function route() {
+async function route() {
   const h = location.hash;
   if (h.startsWith('#share/')) {
-    const enc = h.slice(7);
     try {
-      const b64 = enc.replace(/-/g, '+').replace(/_/g, '/');
-      const pad = b64 + '='.repeat((4 - b64.length % 4) % 4);
-      const raw = atob(pad);
-      let parsed;
-      try { parsed = JSON.parse(decodeURIComponent(escape(raw))); }
-      catch(e) { parsed = JSON.parse(decodeURIComponent(raw)); }
-      let imported;
-      if (Array.isArray(parsed)) {
-        // compact v2: [title, dayNums, hourIndices, [[name, availStr], ...]]
-        const [title, days, hIdx, r] = parsed;
-        const dates = days.map(n => new Date(SHARE_EPOCH + n * 86400000).toISOString().slice(0, 10));
-        const hours = hIdx.map(i => HOUR_ORDER[i]);
-        const respondents = r.map(([n]) => n);
-        const responses = {};
-        for (const [name, avail] of r) {
-          responses[name] = {};
-          let i = 0;
-          for (const date of dates) {
-            for (const hour of hours) {
-              const v = avail[i++];
-              if (v === '2') responses[name][slotKey(date, hour)] = 'available';
-              else if (v === '1') responses[name][slotKey(date, hour)] = 'maybe';
-            }
-          }
-        }
-        imported = { title, dates, hours, respondents, responses };
-      } else {
-        imported = parsed;
-      }
-      const id = genId();
-      const polls = loadAll();
-      polls[id] = { ...imported, createdAt: Date.now() };
-      saveAll(polls);
-      location.hash = '#p=' + id;
+      const id = await createPoll(fromLegacy(decodeLegacyShare(h.slice(7))));
+      location.replace('#p=' + id);
     } catch(e) {
       showToast('Could not import poll from link.');
       location.hash = '';
     }
     return;
   }
-  const m = h.match(/^#p=(.+)$/);
+  const m = h.match(/^#p=([a-z0-9]+)$/);
   if (m) {
     currentPollId = m[1];
     showPoll();
@@ -377,6 +565,7 @@ function route() {
 // HOME
 // ─────────────────────────────────────────────────────────────────────────────
 function showHome() {
+  detachPoll();
   document.getElementById('home-view').style.display = '';
   document.getElementById('poll-view').style.display = 'none';
   document.getElementById('btn-back').style.display = 'none';
@@ -386,7 +575,7 @@ function showHome() {
 }
 
 function renderHome() {
-  const polls = loadAll();
+  const polls = loadJSON(INDEX_KEY);
   const ids = Object.keys(polls).sort((a,b) => (polls[b].createdAt||0) - (polls[a].createdAt||0));
   const list = document.getElementById('poll-list');
   if (ids.length === 0) {
@@ -396,12 +585,13 @@ function renderHome() {
   list.innerHTML = ids.map(id => {
     const p = polls[id];
     const dt = p.createdAt ? new Date(p.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
-    const nr = (p.respondents||[]).length;
-    const nd = (p.dates||[]).length;
-    const meta = [dt, nd ? nd+' day'+(nd>1?'s':'') : '', nr ? nr+' respondent'+(nr>1?'s':'') : ''].filter(Boolean).join(' \u00b7 ');
+    const nr = p.nResp || 0;
+    const nd = p.nDates || 0;
+    const meta = [dt, nd ? nd+' day'+(nd>1?'s':'') : '', nr ? nr+' respondent'+(nr>1?'s':'') : '',
+                  p.final ? 'scheduled' : '', p.mine ? '' : 'shared with you'].filter(Boolean).join(' \u00b7 ');
     return `<div class="group bg-white border border-outline/20 rounded-2xl p-5 flex items-center gap-4 cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-primary/30 border-l-4 border-l-primary" onclick="openPoll('${escAttr(id)}')" role="button">
       <div class="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center text-primary flex-shrink-0">
-        <span class="material-symbols-outlined">groups</span>
+        <span class="material-symbols-outlined">${p.final ? 'event_available' : 'groups'}</span>
       </div>
       <div class="flex-1 min-w-0">
         <div class="font-bold text-on-surface text-sm truncate">${escHtml(p.title||'Untitled poll')}</div>
@@ -409,7 +599,7 @@ function renderHome() {
       </div>
       <div class="flex gap-2 flex-shrink-0">
         <button class="text-xs font-bold bg-primary text-on-primary px-3 py-1.5 rounded-xl hover:opacity-90 active:scale-95 transition-all" onclick="event.stopPropagation();openPoll('${escAttr(id)}')">Open</button>
-        <button class="text-xs font-bold bg-red-100 text-red-600 px-3 py-1.5 rounded-xl hover:opacity-85 active:scale-95 transition-all" onclick="event.stopPropagation();deletePoll('${escAttr(id)}')">Delete</button>
+        <button class="text-xs font-bold bg-red-100 text-red-600 px-3 py-1.5 rounded-xl hover:opacity-85 active:scale-95 transition-all" onclick="event.stopPropagation();deletePoll('${escAttr(id)}')">${p.mine ? 'Delete' : 'Remove'}</button>
       </div>
     </div>`;
   }).join('');
@@ -417,22 +607,29 @@ function renderHome() {
 
 function openPoll(id) { location.hash = '#p=' + id; }
 
-function deletePoll(id) {
-  const polls = loadAll();
-  if (!polls[id]) return;
-  if (!confirm('Delete "' + (polls[id].title || 'this poll') + '"?')) return;
-  delete polls[id];
-  saveAll(polls);
+async function deletePoll(id) {
+  const p = loadJSON(INDEX_KEY)[id];
+  if (!p) return;
+  const title = p.title || 'this poll';
+  if (!p.mine) {
+    if (!confirm('Remove "' + title + '" from your list? The poll stays available via its link.')) return;
+  } else {
+    if (!confirm('Delete "' + title + '" for everyone? This cannot be undone.')) return;
+    try { await deletePollRemote(id); }
+    catch(e) { showToast('Could not delete poll — check your connection.'); return; }
+  }
+  forgetPoll(id);
   renderHome();
 }
 
 document.getElementById('btn-new-poll').addEventListener('click', function() {
   pendingDates.clear();
-  pendingHours = new Set(BIZ);
+  pendingFrom = '09:00'; pendingTo = '17:00'; pendingStep = 60;
   { const t = new Date(); calYear = t.getFullYear(); calMonth = t.getMonth(); }
   document.getElementById('modal-title-input').value = '';
+  document.getElementById('t-deadline').value = '';
   buildCalendar();
-  buildHourGrid();
+  buildTimeSelects();
   updateAddBtn();
   document.getElementById('create-modal').style.display = 'flex';
   setTimeout(function(){ document.getElementById('modal-title-input').focus(); }, 50);
@@ -449,22 +646,23 @@ document.getElementById('create-modal').addEventListener('click', function(e) {
 document.getElementById('modal-title-input').addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closeModal();
 });
-document.getElementById('btn-create-poll').addEventListener('click', function() {
-  if (pendingDates.size === 0 || pendingHours.size === 0) return;
+document.getElementById('btn-create-poll').addEventListener('click', async function() {
+  const hours = pendingSlots();
+  if (pendingDates.size === 0 || hours.length === 0) return;
   const title = document.getElementById('modal-title-input').value.trim() || 'New poll';
-  const id = genId();
-  const polls = loadAll();
-  polls[id] = {
-    title,
-    dates: [...pendingDates].sort(),
-    hours: [...pendingHours].sort(function(a,b){ return HOUR_ORDER.indexOf(a) - HOUR_ORDER.indexOf(b); }),
-    respondents: [],
-    responses: {},
-    createdAt: Date.now()
-  };
-  saveAll(polls);
-  closeModal();
-  openPoll(id);
+  const dl = document.getElementById('t-deadline').value;
+  const deadline = dl ? new Date(dl).getTime() : null;
+  if (deadline && deadline <= Date.now()) { showToast('The voting deadline must be in the future.'); return; }
+  this.disabled = true;
+  try {
+    const id = await createPoll({title, dates: [...pendingDates].sort(), hours, step: pendingStep, tz: MY_TZ, deadline});
+    closeModal();
+    openPoll(id);
+  } catch(e) {
+    showToast('Could not create poll — check your connection.');
+  } finally {
+    updateAddBtn();
+  }
 });
 
 document.getElementById('logo-link').addEventListener('click', function(e) {
@@ -475,49 +673,120 @@ document.getElementById('btn-back').addEventListener('click', function() { locat
 // ─────────────────────────────────────────────────────────────────────────────
 // POLL STATE
 // ─────────────────────────────────────────────────────────────────────────────
+// state = {title, dates, hours, step, tz, owner, createdAt, deadline?, final?, responses: {voter: {name, slots, joinedAt}}}
 let state = null;
-let activeName = null;
 let pendingDates = new Set();
-let pendingHours = new Set(BIZ);
+let pendingFrom = '09:00', pendingTo = '17:00', pendingStep = 60;
+let liveRef = null, liveCb = null;
+let viewTz = MY_TZ;
+let picking = false;
+let _deadlineTimer;
 
-function saveCurrent() {
-  if (!currentPollId || !state) return;
-  const polls = loadAll();
-  polls[currentPollId] = state;
-  saveAll(polls);
+function me()      { return voterFor(currentPollId); }
+function joined()  { return !!(state && state.responses[me()]); }
+function isOwner() { return !!(state && (state.owner === uid || state.owner === me())); }
+function isClosed() { return !!(state.final || (state.deadline && Date.now() >= state.deadline)); }
+function voterIds() {
+  return Object.keys(state.responses).sort((a,b) =>
+    (state.responses[a].joinedAt||0) - (state.responses[b].joinedAt||0));
+}
+function nameOf(id) { return (state.responses[id] && state.responses[id].name) || '?'; }
+
+function saveMine() {
+  const mine = state.responses[me()];
+  return pollRef(currentPollId).child('responses/' + me())
+    .set({name: mine.name, slots: mine.slots || {}, joinedAt: mine.joinedAt, updatedAt: Date.now()})
+    .catch(() => showToast('Could not save — check your connection.'));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SHOW POLL
+// SHOW POLL  (live: re-renders whenever anyone changes the poll)
 // ─────────────────────────────────────────────────────────────────────────────
 function showPoll() {
-  const polls = loadAll();
-  if (!polls[currentPollId]) { location.hash = ''; return; }
-
-  state = polls[currentPollId];
-  activeName = null;
+  detachPoll();
+  state = null;
+  viewTz = MY_TZ;
+  picking = false;
 
   document.getElementById('home-view').style.display = 'none';
   document.getElementById('poll-view').style.display = '';
   document.getElementById('btn-back').style.display = 'flex';
   const titleEl = document.getElementById('poll-title-input');
   titleEl.style.display = '';
-  titleEl.value = state.title || '';
-  document.title = (state.title || 'New poll') + ' — Huddle';
-
+  titleEl.value = '';
   document.getElementById('active-badge').textContent = '';
+  document.getElementById('respondents-label').textContent = '';
+  document.getElementById('status-card').style.display = 'none';
+  document.getElementById('table-outer').innerHTML =
+    '<div class="text-center py-10 text-on-surface-variant text-sm">Loading poll…</div>';
+
+  const id = currentPollId;
+  liveRef = pollRef(id);
+  liveCb = liveRef.on('value', snap => {
+    const v = snap.val();
+    if (!v || !v.meta) {
+      showToast('This poll does not exist or was deleted.');
+      forgetPoll(id);
+      location.hash = '';
+      return;
+    }
+    onPollData(v);
+  }, () => {
+    showToast('Could not load poll.');
+    location.hash = '';
+  });
+}
+
+function detachPoll() {
+  if (liveRef) liveRef.off('value', liveCb);
+  liveRef = liveCb = null;
+  clearTimeout(_deadlineTimer);
+}
+
+function onPollData(v) {
+  const mine = state && state.responses[me()];
+  state = {...v.meta, dates: v.meta.dates || [], hours: v.meta.hours || [], step: v.meta.step || 60, responses: v.responses || {}};
+  Object.values(state.responses).forEach(r => { r.slots = r.slots || {}; });
+  rememberPoll(currentPollId, state, Object.keys(state.responses).length);
+
+  // Don't let a remote update clobber cells being painted right now.
+  if (drag.active) { if (mine) state.responses[me()] = mine; return; }
+
+  // Re-render the moment the voting deadline passes.
+  clearTimeout(_deadlineTimer);
+  if (state.deadline && state.deadline > Date.now())
+    _deadlineTimer = setTimeout(renderAll, Math.min(state.deadline - Date.now() + 50, 2147483647));
+
+  const titleEl = document.getElementById('poll-title-input');
+  if (document.activeElement !== titleEl) titleEl.value = state.title || '';
+  titleEl.readOnly = !isOwner();
+  titleEl.title = isOwner() ? 'Rename poll' : '';
+  document.title = (state.title || 'New poll') + ' — Huddle';
+  renderAll();
+}
+
+function renderAll() {
+  if (!state) return;
+  if (isClosed()) picking = false;
+  renderStatus();
+  renderNameCard();
+  renderToolbar();
   renderTable();
 }
 
+let _titleTimer;
 document.getElementById('poll-title-input').addEventListener('input', function() {
-  if (!state) return;
-  state.title = this.value;
-  document.title = (this.value || 'New poll') + ' — Huddle';
-  saveCurrent();
+  if (!state || !isOwner()) return;
+  const id = currentPollId, title = this.value;
+  document.title = (title || 'New poll') + ' — Huddle';
+  clearTimeout(_titleTimer);
+  _titleTimer = setTimeout(() => {
+    pollRef(id).child('meta/title').set(title).catch(() => showToast('Could not rename poll.'));
+  }, 400);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DATE HELPERS
+// DATE & TIME HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 function isoToday() {
   const d = new Date();
@@ -534,7 +803,57 @@ function fmtDate(iso) {
     full:    d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}),
   };
 }
-function sortedUnique(arr) { return [...new Set(arr)].sort(); }
+function toMin(t) { const [h, m] = t.split(':').map(Number); return h * 60 + m; }
+function fromMin(n) { return String(Math.floor(n / 60)).padStart(2,'0') + ':' + String(n % 60).padStart(2,'0'); }
+// "HH:MM" -> "9 AM" / "9:30 AM" / "09:30", following the browser's 12/24-hour preference.
+function fmtTime(t) {
+  const [h, m] = t.split(':').map(Number);
+  if (h === 24) return H12 ? 'midnight' : '24:00';
+  return new Date(2000, 0, 1, h, m).toLocaleTimeString([], H12 && !m ? {hour: 'numeric'} : {hour: 'numeric', minute: '2-digit'});
+}
+function fmtDur(min) {
+  const h = Math.floor(min / 60), m = min % 60;
+  return [h ? h + ' h' : '', m ? m + ' min' : ''].filter(Boolean).join(' ');
+}
+
+// ── Time zones (Intl only, no library) ──
+const _tzFmt = {};
+function zoneParts(ms, tz) {
+  const f = _tzFmt[tz] || (_tzFmt[tz] = new Intl.DateTimeFormat('en-US', {timeZone: tz, hourCycle: 'h23',
+    year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit'}));
+  const p = {};
+  f.formatToParts(ms).forEach(x => { p[x.type] = x.value; });
+  if (p.hour === '24') p.hour = '00';
+  return p;
+}
+function tzOffset(ms, tz) {
+  const p = zoneParts(ms, tz);
+  return Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second) - Math.floor(ms / 1000) * 1000;
+}
+// Wall-clock date + time in `tz` -> UTC milliseconds.
+function zonedToUtc(date, time, tz) {
+  const [y, mo, d] = date.split('-').map(Number), [h, mi] = time.split(':').map(Number);
+  const guess = Date.UTC(y, mo - 1, d, h, mi);
+  return guess - tzOffset(guess - tzOffset(guess, tz), tz);
+}
+// UTC milliseconds -> {date: "YYYY-MM-DD", time: "HH:MM"} in `tz`.
+function utcToZoned(ms, tz) {
+  const p = zoneParts(ms, tz);
+  return {date: p.year + '-' + p.month + '-' + p.day, time: p.hour + ':' + p.minute};
+}
+function validTz(tz) {
+  try { new Intl.DateTimeFormat('en-US', {timeZone: tz}); return true; } catch(e) { return false; }
+}
+function pollTz() { return state.tz && validTz(state.tz) ? state.tz : MY_TZ; }
+function tzName(tz) {
+  let abbr = '';
+  try {
+    abbr = new Intl.DateTimeFormat('en-US', {timeZone: tz, timeZoneName: 'short'})
+      .formatToParts(Date.now()).find(x => x.type === 'timeZoneName').value;
+  } catch(e) {}
+  return tz.replace(/_/g, ' ') + (abbr ? ' (' + abbr + ')' : '');
+}
+function slotUtc(key) { const [d, h] = key.split('|'); return zonedToUtc(d, h, pollTz()); }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CALENDAR
@@ -617,30 +936,47 @@ document.getElementById('date-chips').addEventListener('click', function(e) {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// HOUR GRID
+// TIME SLOT SETUP  (range + slot length, in the creator's time zone)
 // ─────────────────────────────────────────────────────────────────────────────
-function buildHourGrid() {
-  document.getElementById('hour-grid').innerHTML = ALL_HOURS.map(h =>
-    `<button class="hour-btn${pendingHours.has(h.v)?' active':''}" data-h="${h.v}">${h.l}</button>`
-  ).join('');
+function pendingSlots() {
+  const out = [];
+  for (let t = toMin(pendingFrom); t + pendingStep <= toMin(pendingTo); t += pendingStep) out.push(fromMin(t));
+  return out;
 }
-document.getElementById('hour-grid').addEventListener('click', function(e) {
-  const b = e.target.closest('[data-h]'); if(!b) return;
-  if (pendingHours.has(b.dataset.h)) pendingHours.delete(b.dataset.h); else pendingHours.add(b.dataset.h);
-  buildHourGrid(); updateAddBtn();
+function buildTimeSelects() {
+  const opts = (from, to, sel) => {
+    let html = '';
+    for (let t = from; t <= to; t += 30) {
+      const v = fromMin(t);
+      html += `<option value="${v}"${v === sel ? ' selected' : ''}>${fmtTime(v)}</option>`;
+    }
+    return html;
+  };
+  document.getElementById('t-from').innerHTML = opts(0, 1410, pendingFrom);
+  document.getElementById('t-to').innerHTML = opts(30, 1440, pendingTo);
+  document.getElementById('t-step').value = String(pendingStep);
+}
+document.getElementById('t-from').addEventListener('change', function(){ pendingFrom = this.value; updateAddBtn(); });
+document.getElementById('t-to').addEventListener('change', function(){ pendingTo = this.value; updateAddBtn(); });
+document.getElementById('t-step').addEventListener('change', function(){ pendingStep = +this.value; updateAddBtn(); });
+document.getElementById('time-presets').addEventListener('click', function(e) {
+  const b = e.target.closest('[data-preset]'); if (!b) return;
+  [pendingFrom, pendingTo] = b.dataset.preset.split('-');
+  buildTimeSelects(); updateAddBtn();
 });
-document.getElementById('h-all').addEventListener('click',  function(){ ALL_HOURS.forEach(h=>pendingHours.add(h.v)); buildHourGrid(); updateAddBtn(); });
-document.getElementById('h-biz').addEventListener('click',  function(){ pendingHours=new Set(BIZ); buildHourGrid(); updateAddBtn(); });
-document.getElementById('h-eve').addEventListener('click',  function(){ pendingHours=new Set(EVE); buildHourGrid(); updateAddBtn(); });
-document.getElementById('h-none').addEventListener('click', function(){ pendingHours.clear(); buildHourGrid(); updateAddBtn(); });
 
 function updateAddBtn() {
-  const n = pendingDates.size * pendingHours.size;
+  const perDay = pendingSlots().length;
+  const n = pendingDates.size * perDay;
   const btn = document.getElementById('btn-create-poll');
   const lbl = document.getElementById('btn-create-poll-label');
   if (!btn) return;
   btn.disabled = n === 0;
   if (lbl) lbl.textContent = n > 0 ? 'Create Poll (' + n + ' slot' + (n===1?'':'s') + ')' : 'Create Poll';
+  document.getElementById('t-hint').textContent = (perDay
+    ? perDay + ' slot' + (perDay === 1 ? '' : 's') + ' per day. '
+    : 'The end time must be after the start time. ')
+    + 'Times are in your time zone, ' + tzName(MY_TZ) + '; voters see them converted to theirs.';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -649,48 +985,101 @@ function updateAddBtn() {
 document.getElementById('btn-name').addEventListener('click', setName);
 document.getElementById('name-input').addEventListener('keydown', function(e){ if(e.key==='Enter') setName(); });
 function setName() {
+  if (!state) return;
+  if (isClosed()) { showToast('Voting is closed.'); return; }
   const input = document.getElementById('name-input');
   const name = input.value.trim();
   if (!name) { showToast('Enter your name first'); return; }
-  if (!state.respondents.includes(name)) { state.respondents.push(name); state.responses[name]={}; }
-  activeName = name;
-  input.value = '';
-  document.getElementById('active-badge').textContent = 'Editing as: '+name;
-  saveCurrent(); renderTable();
-  showToast('Welcome '+name+'! Drag cells to mark your availability.');
+  const taken = voterIds().some(id => id !== me() && nameOf(id).toLowerCase() === name.toLowerCase());
+  if (taken) { showToast('"' + name + '" already voted — pick a different name'); return; }
+  const wasJoined = joined();
+  if (!wasJoined) state.responses[me()] = {slots: {}, joinedAt: Date.now()};
+  state.responses[me()].name = name;
+  try { localStorage.setItem(NAME_KEY, name); } catch(e) {}
+  saveMine();
+  renderNameCard(); renderTable();
+  showToast(wasJoined ? 'Name updated.' : 'Welcome '+name+'! Drag cells to mark your availability.');
 }
+
+function renderNameCard() {
+  const input = document.getElementById('name-input');
+  const mine = joined();
+  if (mine) {
+    if (document.activeElement !== input) input.value = nameOf(me());
+  } else if (!input.value) {
+    try { input.value = localStorage.getItem(NAME_KEY) || ''; } catch(e) {}
+  }
+  document.getElementById('btn-name').textContent = mine ? 'Rename' : 'Join poll';
+  document.getElementById('active-badge').textContent = mine ? 'Voting as: ' + nameOf(me()) : '';
+  document.getElementById('btn-edit-link').style.display = mine ? 'flex' : 'none';
+  document.getElementById('name-hint').textContent = isClosed()
+    ? 'Voting is closed — answers can no longer be changed.'
+    : mine ? 'Drag across cells to mark your availability. Changes save automatically.'
+           : 'Enter your name, then drag across cells to mark your availability.';
+}
+
+document.getElementById('btn-edit-link').addEventListener('click', async function() {
+  try {
+    const url = await editLink();
+    shareOrCopy(url, 'Edit my Huddle answer', 'Edit link copied — open it on your other device. Keep it private.');
+  } catch(e) {
+    showToast('Could not create an edit link — check your connection.');
+  }
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CELL HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 function slotKey(d,h) { return d+'|'+h; }
-function getCell(name,d,h) { return (state.responses[name]&&state.responses[name][slotKey(d,h)])||'none'; }
-function setCell(name,d,h,v) { if(!state.responses[name]) state.responses[name]={}; state.responses[name][slotKey(d,h)]=v; }
+function getCell(id,k) { const r = state.responses[id]; return (r && r.slots[k]) || 'none'; }
+function setCell(id,k,v) {
+  const slots = state.responses[id].slots;
+  if (v === 'none') delete slots[k]; else slots[k] = v;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CELL BACKGROUND  (reflects the active user's own pick)
+// GRID  (poll slots laid out in the viewer's chosen time zone)
 // ─────────────────────────────────────────────────────────────────────────────
-function cellBg(d,h) {
-  if (!activeName) return '#f6f2fa';
-  const s = getCell(activeName, d, h);
+function buildGrid() {
+  const ptz = pollTz(), same = ptz === viewTz;
+  const at = {}, cols = new Set(), rows = new Set();
+  state.dates.forEach(d => state.hours.forEach(h => {
+    const ms = zonedToUtc(d, h, ptz);
+    const v = same ? {date: d, time: h} : utcToZoned(ms, viewTz);
+    at[v.date + ' ' + v.time] = {key: slotKey(d, h), ms, time: v.time};
+    cols.add(v.date); rows.add(v.time);
+  }));
+  return {cols: [...cols].sort(), rows: [...rows].sort(), at};
+}
+
+function cellBg(k) {
+  if (!joined()) return '#f6f2fa';
+  const s = getCell(me(), k);
   if (s === 'available') return '#bbf7d0';
   if (s === 'maybe')     return '#fef9c3';
   return '#f6f2fa';
 }
 
-function getBestSlots(date) {
-  const total = state.respondents.length;
+function getBestSlots(cells) {
+  const ids = voterIds();
+  const total = ids.length;
   if (total < 2) return [];
   const out = [];
-  state.hours.forEach(h => {
-    const av = state.respondents.filter(n=>getCell(n,date,h)==='available').length;
-    const mb = state.respondents.filter(n=>getCell(n,date,h)==='maybe').length;
+  cells.forEach(c => {
+    const av = ids.filter(n=>getCell(n,c.key)==='available').length;
+    const mb = ids.filter(n=>getCell(n,c.key)==='maybe').length;
     if (av+mb < 2) return;
-    const label = ALL_HOURS.find(x=>x.v===h)?.l||h;
-    if (av===total)         out.push({label,score:'all', rank:total*10});
-    else if (av+mb===total) out.push({label,score:'good',rank:av*2+mb+4});
+    const label = fmtTime(c.time);
+    if (av===total)         out.push({label,key:c.key,score:'all', rank:total*10});
+    else if (av+mb===total) out.push({label,key:c.key,score:'good',rank:av*2+mb+4});
   });
   return out.sort((a,b)=>b.rank-a.rank).slice(0,5);
+}
+
+function finalRange() {
+  if (!state.final) return null;
+  const start = slotUtc(state.final.key);
+  return {start, end: start + state.final.minutes * 60000};
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -701,29 +1090,37 @@ let drag = {active:false,paintState:null,cells:new Set()};
 const tableOuter = document.getElementById('table-outer');
 tableOuter.addEventListener('pointerdown', function(e) {
   const td = e.target.closest('.av'); if (!td) return;
-  if (!activeName) { showToast('Enter your name first'); return; }
+  if (picking) { openFinalModal(td.dataset.k); return; }
+  if (isClosed()) { showToast('Voting is closed.'); return; }
+  if (!joined()) { showToast('Enter your name first'); document.getElementById('name-input').focus(); return; }
   e.preventDefault();
   this.setPointerCapture(e.pointerId);
-  const cur = getCell(activeName, td.dataset.d, td.dataset.h);
-  drag = {active:true, paintState:CYCLE[(CYCLE.indexOf(cur)+1)%CYCLE.length], cells:new Set()};
+  const cur = getCell(me(), td.dataset.k);
+  drag = {active:true, paintState:CYCLE[(CYCLE.indexOf(cur)+1)%CYCLE.length], cells:new Set([td.dataset.k])};
   paintCell(td);
 }, {passive:false});
 tableOuter.addEventListener('pointermove', function(e) {
   if (!drag.active) return;
   const el = document.elementFromPoint(e.clientX,e.clientY); if(!el) return;
   const td = el.closest && el.closest('.av'); if(!td) return;
-  const k = slotKey(td.dataset.d,td.dataset.h);
-  if (drag.cells.has(k)) return;
-  drag.cells.add(k);
+  if (drag.cells.has(td.dataset.k)) return;
+  drag.cells.add(td.dataset.k);
   paintCell(td);
 });
 tableOuter.addEventListener('pointerup',     endDrag);
 tableOuter.addEventListener('pointercancel', endDrag);
+tableOuter.addEventListener('click', function(e) {
+  const el = e.target.closest('[data-act],[data-final]'); if (!el) return;
+  e.stopPropagation();
+  if (el.dataset.final && isOwner() && !state.final) openFinalModal(el.dataset.final);
+  if (el.dataset.act === 'rem')   removeRespondent(el.dataset.id);
+  if (el.dataset.act === 'remme') removeRespondent(me());
+});
 
 function paintCell(td) {
-  const d=td.dataset.d, h=td.dataset.h;
-  setCell(activeName, d, h, drag.paintState);
-  td.style.background = cellBg(d,h);
+  const k = td.dataset.k;
+  setCell(me(), k, drag.paintState);
+  td.style.background = cellBg(k);
   const dot = td.querySelector('.rdot-me');
   if (dot) dot.style.background = DOT_COLOR[drag.paintState]||'#e2e8f0';
 }
@@ -731,19 +1128,17 @@ function paintCell(td) {
 function endDrag() {
   if (!drag.active) return;
   drag.active=false; drag.cells.clear();
-  saveCurrent(); renderTable();
+  saveMine(); renderTable();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// REMOVE
+// REMOVE  (anyone can remove themselves; the poll owner can remove anyone)
 // ─────────────────────────────────────────────────────────────────────────────
-function removeDate(date) { state.dates=state.dates.filter(d=>d!==date); saveCurrent(); renderTable(); }
-function removeRespondent(name) {
-  if (!confirm('Remove '+name+'?')) return;
-  state.respondents=state.respondents.filter(r=>r!==name);
-  delete state.responses[name];
-  if (activeName===name) { activeName=null; document.getElementById('active-badge').textContent=''; }
-  saveCurrent(); renderTable();
+function removeRespondent(id) {
+  const who = id === me() ? 'your availability' : nameOf(id);
+  if (!confirm('Remove ' + who + ' from this poll?')) return;
+  pollRef(currentPollId).child('responses/' + id).remove()
+    .catch(() => showToast('Could not remove — check your connection.'));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -751,28 +1146,35 @@ function removeRespondent(name) {
 // ─────────────────────────────────────────────────────────────────────────────
 function renderTable() {
   const outer = document.getElementById('table-outer');
+  const ids = voterIds();
+  const mine = joined() ? me() : null;
   document.getElementById('respondents-label').textContent =
-    state.respondents.length ? '— '+state.respondents.join(', ') : '';
+    ids.length ? '— ' + ids.length + ' respondent' + (ids.length>1?'s':'') : '';
 
   if (!state.dates.length || !state.hours.length) {
     outer.innerHTML='<div style="text-align:center;padding:38px;color:#94a3b8">No time slots configured for this poll.</div>';
     return;
   }
 
-  // Respondent tabs
+  // Respondent chips (owner can remove anyone, everyone can remove themselves)
   let tabs = '';
-  if (state.respondents.length) {
+  if (ids.length) {
     tabs = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">';
-    state.respondents.forEach(n => {
-      const me = n===activeName;
-      tabs += `<button class="btn btn-sm ${me?'btn-primary':'btn-ghost'}" data-act="sw" data-n="${escAttr(n)}">${escHtml(n)}</button>`;
+    ids.forEach(id => {
+      const label = escHtml(nameOf(id)) + (id===mine ? ' (you)' : '');
+      const x = isOwner() && id!==mine ? ` <span data-act="rem" data-id="${escAttr(id)}" style="cursor:pointer;opacity:.6" title="Remove">&times;</span>` : '';
+      tabs += `<span class="btn btn-sm ${id===mine?'btn-primary':'btn-ghost'}" style="cursor:default">${label}${x}</span>`;
     });
-    tabs += `<button class="btn btn-sm btn-danger" data-act="remme" style="margin-left:auto">Remove me</button></div>`;
+    if (mine && !isClosed()) tabs += `<button class="btn btn-sm btn-danger" data-act="remme" style="margin-left:auto">Remove me</button>`;
+    tabs += '</div>';
   }
+
+  const grid = buildGrid();
+  const fin = finalRange();
 
   // Header
   let head = `<tr><th class="th-corner"></th>`;
-  state.dates.forEach(date => {
+  grid.cols.forEach(date => {
     const {weekday,short} = fmtDate(date);
     head += `<th class="th-date"><span class="d-weekday">${weekday}</span><span class="d-short">${short}</span></th>`;
   });
@@ -780,75 +1182,239 @@ function renderTable() {
 
   // Data rows
   let rows = '';
-  state.hours.forEach(hour => {
-    const lbl = ALL_HOURS.find(h=>h.v===hour)?.l||hour;
-    rows += `<tr><td class="td-time">${lbl}</td>`;
-    state.dates.forEach(date => {
-      const myS = activeName ? getCell(activeName,date,hour) : 'none';
-      const nAttr = activeName ? `data-n="${escAttr(activeName)}"` : '';
-      const bg = cellBg(date,hour);
-      const tip = state.respondents.map(n=>{ const s=getCell(n,date,hour); return s!=='none'?n+': '+s:null; }).filter(Boolean).join(' | ');
-      const dots = state.respondents.map(n => {
-        const s = getCell(n,date,hour);
-        const me = n===activeName;
-        return `<span class="rdot${me?' rdot-me':''}" style="background:${DOT_COLOR[s]||'#e2e8f0'}" title="${escAttr(n+': '+s)}"></span>`;
+  grid.rows.forEach(time => {
+    rows += `<tr><td class="td-time">${fmtTime(time)}</td>`;
+    grid.cols.forEach(date => {
+      const c = grid.at[date + ' ' + time];
+      if (!c) { rows += '<td class="av-off" title="Not part of this poll"></td>'; return; }
+      const myS = mine ? getCell(mine,c.key) : 'none';
+      const isFinal = fin && c.ms >= fin.start && c.ms < fin.end;
+      const tip = ids.map(id=>{ const s=getCell(id,c.key); return s!=='none'?nameOf(id)+': '+s:null; }).filter(Boolean).join(' | ');
+      const dots = ids.map(id => {
+        const s = getCell(id,c.key);
+        return `<span class="rdot${id===mine?' rdot-me':''}" style="background:${DOT_COLOR[s]||'#e2e8f0'}" title="${escAttr(nameOf(id)+': '+s)}"></span>`;
       }).join('');
-      rows += `<td class="av" data-s="${myS}" data-d="${date}" data-h="${hour}" ${nAttr} style="background:${bg}" title="${escAttr(tip)}">${dots?`<div class="rdots">${dots}</div>`:''}</td>`;
+      rows += `<td class="av${isFinal?' av-final':''}" data-s="${myS}" data-k="${c.key}" style="background:${cellBg(c.key)}" title="${escAttr(tip)}">${dots?`<div class="rdots">${dots}</div>`:''}</td>`;
     });
     rows += '</tr>';
   });
 
-  // Footer best slots
+  // Footer best slots (the owner can click one to make it the meeting time)
   let foot = '';
-  if (state.respondents.length > 1) {
+  if (ids.length > 1) {
+    const clickable = isOwner() && !state.final;
     foot = '<tr><td class="td-time td-sum-label">Best<br>slots</td>';
-    state.dates.forEach(date => {
-      const best = getBestSlots(date);
+    grid.cols.forEach(date => {
+      const best = getBestSlots(grid.rows.map(t => grid.at[date + ' ' + t]).filter(Boolean));
       const inner = best.length
-        ? best.map(b=>`<span class="${b.score==='all'?'best-all':'best-good'}">${b.label}</span>`).join('')
+        ? best.map(b=>`<span class="${b.score==='all'?'best-all':'best-good'}${clickable?' best-click':''}"${clickable?` data-final="${b.key}" title="Set as meeting time"`:''}>${b.label}</span>`).join('')
         : `<span style="color:#cbd5e1;font-size:.68rem">&mdash;</span>`;
       foot += `<td class="sum-date-cell">${inner}</td>`;
     });
     foot += '</tr>';
   }
 
-  outer.innerHTML = tabs + `<table><thead>${head}</thead><tbody>${rows}</tbody>${foot?`<tfoot>${foot}</tfoot>`:''}</table>`;
-
-  outer.querySelectorAll('[data-act]').forEach(el => {
-    el.addEventListener('click', function(e) {
-      e.stopPropagation();
-      if (this.dataset.act==='sw')    { activeName=this.dataset.n; document.getElementById('active-badge').textContent='Editing as: '+activeName; renderTable(); }
-      if (this.dataset.act==='remme') { if (activeName) removeRespondent(activeName); }
-
-    });
-  });
+  const cls = 's' + state.step + (isClosed() ? ' closed' : '') + (picking ? ' picking' : '');
+  outer.className = 'table-outer ' + (isClosed() ? 'closed' : '') + (picking ? ' picking' : '');
+  outer.innerHTML = tabs + `<table class="${cls}"><thead>${head}</thead><tbody>${rows}</tbody>${foot?`<tfoot>${foot}</tfoot>`:''}</table>`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SHARE
+// TOOLBAR  (time zone switch, owner's "pick final time")
 // ─────────────────────────────────────────────────────────────────────────────
-const SHARE_EPOCH = new Date('2020-01-01').getTime();
-function encodeShareState(s) {
-  // compact: [title, [dayNums], [hourIndices], [[name, "0120..."], ...]]
-  const days = s.dates.map(d => Math.round((new Date(d) - SHARE_EPOCH) / 86400000));
-  const hIdx = s.hours.map(h => HOUR_ORDER.indexOf(h));
-  const r = s.respondents.map(name => [
-    name,
-    s.dates.flatMap(date => s.hours.map(hour => {
-      const v = s.responses[name]?.[slotKey(date, hour)];
-      return v === 'available' ? '2' : v === 'maybe' ? '1' : '0';
-    })).join('')
-  ]);
-  return btoa(unescape(encodeURIComponent(JSON.stringify([s.title, days, hIdx, r]))));
+function renderToolbar() {
+  const ptz = pollTz();
+  const sel = document.getElementById('tz-select'), note = document.getElementById('tz-note');
+  if (ptz === MY_TZ) {
+    viewTz = MY_TZ;
+    sel.style.display = 'none';
+    note.textContent = 'Times in ' + tzName(MY_TZ);
+  } else {
+    if (viewTz !== ptz) viewTz = MY_TZ;
+    sel.style.display = '';
+    note.textContent = 'Times shown in';
+    sel.innerHTML = `<option value="${escAttr(MY_TZ)}">your time zone: ${escHtml(tzName(MY_TZ))}</option>`
+                  + `<option value="${escAttr(ptz)}">organizer's: ${escHtml(tzName(ptz))}</option>`;
+    sel.value = viewTz;
+  }
+  const pick = document.getElementById('btn-pick');
+  pick.style.display = isOwner() && !state.final ? 'flex' : 'none';
+  document.getElementById('btn-pick-label').textContent = picking ? 'Cancel picking' : 'Pick final time';
+}
+document.getElementById('tz-select').addEventListener('change', function() {
+  viewTz = this.value;
+  renderAll();
+});
+document.getElementById('btn-pick').addEventListener('click', function() {
+  picking = !picking;
+  if (picking) showToast('Click the cell where the meeting starts.');
+  renderToolbar(); renderTable();
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FINAL TIME  (owner picks it; everyone gets calendar buttons)
+// ─────────────────────────────────────────────────────────────────────────────
+let finalKey = null;
+
+function fmtWhen(ms, opts) {
+  return new Date(ms).toLocaleString([], {timeZone: viewTz, ...opts});
+}
+function fmtRange(start, end) {
+  const day = fmtWhen(start, {weekday: 'short', month: 'short', day: 'numeric'});
+  const t = {hour: 'numeric', minute: '2-digit'};
+  return day + ', ' + fmtWhen(start, t) + ' – ' + fmtWhen(end, t);
+}
+
+function openFinalModal(key) {
+  picking = false;
+  finalKey = key;
+  const start = slotUtc(key);
+  document.getElementById('final-when').textContent =
+    fmtWhen(start, {weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit'}) + ' · ' + tzName(viewTz);
+  const durs = DURATIONS.filter(m => m >= state.step && m % state.step === 0);
+  const def = Math.max(60, state.step);
+  document.getElementById('final-dur').innerHTML =
+    durs.map(m => `<option value="${m}"${m === def ? ' selected' : ''}>${fmtDur(m)}</option>`).join('');
+  const ids = voterIds(), by = s => ids.filter(id => getCell(id, key) === s).map(nameOf);
+  const none = ids.filter(id => getCell(id, key) === 'none').map(nameOf);
+  document.getElementById('final-who').innerHTML = [
+    ['Available', by('available')], ['Maybe', by('maybe')], ['Not available', none],
+  ].filter(([, n]) => n.length).map(([l, n]) => `<strong>${l}:</strong> ${n.map(escHtml).join(', ')}`).join('<br>');
+  document.getElementById('final-modal').style.display = 'flex';
+  renderToolbar(); renderTable();
+}
+function closeFinalModal() { document.getElementById('final-modal').style.display = 'none'; }
+document.getElementById('final-close').addEventListener('click', closeFinalModal);
+document.getElementById('final-cancel').addEventListener('click', closeFinalModal);
+document.getElementById('final-modal').addEventListener('click', function(e) { if (e.target === this) closeFinalModal(); });
+document.getElementById('final-save').addEventListener('click', function() {
+  const minutes = +document.getElementById('final-dur').value;
+  pollRef(currentPollId).child('meta/final').set({key: finalKey, minutes})
+    .then(() => showToast('Meeting time set.'))
+    .catch(() => showToast('Could not save — check your connection.'));
+  closeFinalModal();
+});
+
+function icsStamp(ms) { return new Date(ms).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, ''); }
+function icsEsc(s) { return String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n'); }
+function buildIcs() {
+  const {start, end} = finalRange();
+  return [
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Huddle//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    'UID:' + currentPollId + '@huddle',
+    'DTSTAMP:' + icsStamp(Date.now()),
+    'DTSTART:' + icsStamp(start),
+    'DTEND:' + icsStamp(end),
+    'SUMMARY:' + icsEsc(state.title || 'Meeting'),
+    'DESCRIPTION:' + icsEsc('Scheduled with Huddle: ' + shareUrl()),
+    'URL:' + shareUrl(),
+    'END:VEVENT', 'END:VCALENDAR',
+  ].join('\r\n') + '\r\n';
+}
+function downloadIcs() {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([buildIcs()], {type: 'text/calendar'}));
+  a.download = (state.title || 'meeting').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-') + '.ics';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+function gcalUrl() {
+  const {start, end} = finalRange();
+  return 'https://calendar.google.com/calendar/render?action=TEMPLATE'
+    + '&text=' + encodeURIComponent(state.title || 'Meeting')
+    + '&dates=' + icsStamp(start) + '/' + icsStamp(end)
+    + '&details=' + encodeURIComponent('Scheduled with Huddle: ' + shareUrl());
+}
+
+function renderStatus() {
+  const el = document.getElementById('status-card');
+  const owner = isOwner();
+  const btn = 'flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl hover:opacity-90 active:scale-95 transition-all no-underline';
+  let html = '';
+  if (state.final) {
+    const {start, end} = finalRange();
+    html = `<div class="bg-primary-container rounded-2xl border border-primary/30 shadow-sm p-5 flex items-center gap-4 flex-wrap">
+      <div class="w-11 h-11 rounded-xl bg-primary text-on-primary flex items-center justify-center flex-shrink-0"><span class="material-symbols-outlined">event_available</span></div>
+      <div class="flex-1 min-w-0">
+        <div class="text-xs font-bold uppercase tracking-widest text-primary mb-0.5">Meeting time</div>
+        <div class="text-lg font-extrabold text-on-surface">${escHtml(fmtRange(start, end))}</div>
+        <div class="text-xs text-on-surface-variant">${escHtml(tzName(viewTz))}</div>
+      </div>
+      <div class="flex gap-2 flex-wrap">
+        <button data-st="ics" class="${btn} bg-primary text-on-primary"><span class="material-symbols-outlined text-sm">download</span> Add to calendar</button>
+        <a data-st="gcal" href="${escAttr(gcalUrl())}" target="_blank" rel="noopener" class="${btn} bg-white text-primary"><span class="material-symbols-outlined text-sm">open_in_new</span> Google Calendar</a>
+        ${owner ? `<button data-st="unfinal" class="${btn} bg-white text-on-surface-variant">Change</button>` : ''}
+      </div>
+    </div>`;
+  } else if (state.deadline) {
+    const closed = isClosed();
+    const when = fmtWhen(state.deadline, {weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'});
+    html = `<div class="bg-white rounded-2xl border border-outline/20 shadow-sm px-5 py-3 flex items-center gap-3 flex-wrap text-sm">
+      <span class="material-symbols-outlined ${closed ? 'text-red-500' : 'text-primary'}">${closed ? 'lock' : 'timer'}</span>
+      <span class="flex-1 font-semibold">${closed ? 'Voting closed' : 'Voting closes'} ${escHtml(when)}${closed && owner ? ' — use <strong>Pick final time</strong> to choose the meeting.' : ''}</span>
+      ${owner ? `<button data-st="${closed ? 'reopen' : 'close'}" class="${btn} bg-primary-container text-primary">${closed ? 'Reopen voting' : 'Close voting now'}</button>` : ''}
+    </div>`;
+  }
+  el.innerHTML = html;
+  el.style.display = html ? '' : 'none';
+}
+document.getElementById('status-card').addEventListener('click', function(e) {
+  const b = e.target.closest('[data-st]'); if (!b) return;
+  const meta = pollRef(currentPollId).child('meta');
+  const fail = () => showToast('Could not save — check your connection.');
+  if (b.dataset.st === 'ics') downloadIcs();
+  if (b.dataset.st === 'unfinal' && confirm('Clear the meeting time and reopen voting?')) meta.child('final').remove().catch(fail);
+  if (b.dataset.st === 'close' && confirm('Close voting now?')) meta.child('deadline').set(Date.now()).catch(fail);
+  if (b.dataset.st === 'reopen') meta.child('deadline').remove().catch(fail);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SHARE  (native share sheet on phones, clipboard elsewhere, QR for screens)
+// ─────────────────────────────────────────────────────────────────────────────
+function baseUrl() { return location.href.split(/[?#]/)[0]; }
+function shareUrl() { return baseUrl() + '?p=' + currentPollId; }
+
+async function shareOrCopy(url, title, copiedMsg) {
+  const phone = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  if (phone && navigator.share) {
+    try { await navigator.share({title, url}); return; }
+    catch(e) { if (e.name === 'AbortError') return; }
+  }
+  try { await navigator.clipboard.writeText(url); showToast(copiedMsg); }
+  catch(e) { prompt('Copy this link:', url); }
 }
 document.getElementById('btn-copy').addEventListener('click', function() {
   if (!state) return;
-  const safe = encodeShareState(state).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-  const url = location.href.split('#')[0] + '#share/' + safe;
-  navigator.clipboard.writeText(url)
-    .then(()=>showToast('Link copied! Share it with your team.'))
-    .catch(()=>prompt('Copy this link:', url));
+  shareOrCopy(shareUrl(), state.title || 'Huddle poll', 'Link copied! Share it with your team.');
 });
+
+let _qrLib = null;
+function loadQr() {
+  return _qrLib || (_qrLib = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = QR_SRC;
+    s.onload = () => resolve(window.qrcode);
+    s.onerror = () => { _qrLib = null; reject(new Error('qr')); };
+    document.head.appendChild(s);
+  }));
+}
+document.getElementById('btn-qr').addEventListener('click', async function() {
+  if (!state) return;
+  const url = shareUrl(), box = document.getElementById('qr-box');
+  document.getElementById('qr-url').textContent = url;
+  box.textContent = 'Loading…';
+  document.getElementById('qr-modal').style.display = 'flex';
+  try {
+    const qr = (await loadQr())(0, 'M');
+    qr.addData(url); qr.make();
+    box.innerHTML = qr.createSvgTag({cellSize: 4, margin: 2, scalable: true});
+  } catch(e) {
+    box.textContent = 'Could not load the QR code generator.';
+  }
+});
+document.getElementById('qr-close').addEventListener('click', () => { document.getElementById('qr-modal').style.display = 'none'; });
+document.getElementById('qr-modal').addEventListener('click', function(e) { if (e.target === this) this.style.display = 'none'; });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TOAST
@@ -864,12 +1430,34 @@ function showToast(msg) {
 // HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function escAttr(s){ return String(s).replace(/"/g,'&quot;'); }
+function escAttr(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BOOT
 // ─────────────────────────────────────────────────────────────────────────────
-route();
+function showSetupError(err) {
+  const msg = {
+    config: 'Huddle needs a shared database before polls can be created and shared. Paste your Firebase config into <code>FIREBASE_CONFIG</code> in <code>index.html</code> &mdash; see the README &rarr; <strong>Setup</strong>.',
+    sdk:    'Could not load the Firebase SDK. Check your internet connection and reload.',
+  }[err && err.message] || 'Could not connect to the poll database (' + escHtml(err && (err.code || err.message) || 'unknown error') + '). Make sure Anonymous sign-in is enabled in Firebase Authentication.';
+  document.getElementById('btn-new-poll').style.display = 'none';
+  document.getElementById('poll-list').innerHTML =
+    `<div class="bg-white border border-red-200 rounded-2xl p-5 text-sm text-on-surface flex gap-3"><span class="material-symbols-outlined text-red-500">cloud_off</span><div>${msg}</div></div>`;
+}
+
+// Share links look like ?p=ID (edit links add &e=VOTER.TOKEN); turn them into the in-app #p=ID route.
+const bootParams = new URLSearchParams(location.search);
+if (bootParams.get('p')) history.replaceState(null, '', location.pathname + '#p=' + bootParams.get('p'));
+
+initBackend().then(async () => {
+  if (bootParams.get('p') && bootParams.get('e')) await claimEditLink(bootParams.get('p'), bootParams.get('e'));
+  window.addEventListener('hashchange', route);
+  route();
+  migrateLegacy().then(() => { if (!currentPollId) renderHome(); });
+}).catch(err => {
+  showHome();
+  showSetupError(err);
+});
 </script>
 </body>
 </html>

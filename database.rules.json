@@ -1,0 +1,56 @@
+{
+  "rules": {
+    "polls": {
+      "$pollId": {
+        ".read": true,
+        "meta": {
+          ".write": "auth != null && (!data.exists() || data.child('owner').val() === auth.uid || (root.child('claims').child($pollId).child(auth.uid).exists() && root.child('claims').child($pollId).child(auth.uid).child('voter').val() === data.child('owner').val()))",
+          ".validate": "newData.hasChildren(['title', 'dates', 'hours', 'owner', 'createdAt']) && ((!data.exists() && newData.child('owner').val() === auth.uid) || (data.exists() && newData.child('owner').val() === data.child('owner').val()))",
+          "title":     { ".validate": "newData.isString() && newData.val().length <= 80" },
+          "step":      { ".validate": "newData.isNumber() && (newData.val() === 15 || newData.val() === 30 || newData.val() === 60)" },
+          "tz":        { ".validate": "newData.isString() && newData.val().length <= 64" },
+          "createdAt": { ".validate": "newData.isNumber()" },
+          "deadline":  { ".validate": "newData.isNumber()" },
+          "final": {
+            ".validate": "newData.hasChildren(['key', 'minutes'])",
+            "key":     { ".validate": "newData.isString()" },
+            "minutes": { ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 1440" },
+            "$other":  { ".validate": false }
+          }
+        },
+        "responses": {
+          "$voterId": {
+            ".write": "auth != null && (auth.uid === $voterId || (root.child('claims').child($pollId).child(auth.uid).exists() && root.child('claims').child($pollId).child(auth.uid).child('voter').val() === $voterId) || (root.child('polls').child($pollId).child('meta/owner').exists() && (root.child('polls').child($pollId).child('meta/owner').val() === auth.uid || root.child('claims').child($pollId).child(auth.uid).child('voter').val() === root.child('polls').child($pollId).child('meta/owner').val())))",
+            ".validate": "newData.hasChildren(['name', 'updatedAt']) && root.child('polls').child($pollId).child('meta').exists() && !root.child('polls').child($pollId).child('meta/final').exists() && (!root.child('polls').child($pollId).child('meta/deadline').exists() || root.child('polls').child($pollId).child('meta/deadline').val() > now)",
+            "name":      { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40" },
+            "slots":     { "$slot": { ".validate": "newData.val() === 'available' || newData.val() === 'maybe'" } },
+            "joinedAt":  { ".validate": "newData.isNumber()" },
+            "updatedAt": { ".validate": "newData.isNumber()" },
+            "$other":    { ".validate": false }
+          }
+        }
+      }
+    },
+    "secrets": {
+      "$pollId": {
+        "$voterId": {
+          ".read": "auth != null && auth.uid === $voterId",
+          ".write": "auth != null && auth.uid === $voterId && !data.exists()",
+          ".validate": "newData.isString() && newData.val().length >= 16 && newData.val().length <= 64"
+        }
+      }
+    },
+    "claims": {
+      "$pollId": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.hasChildren(['voter', 'token']) && newData.child('token').isString() && root.child('secrets').child($pollId).child(newData.child('voter').val()).val() === newData.child('token').val()",
+          "voter":  { ".validate": "newData.isString()" },
+          "token":  { ".validate": "newData.isString()" },
+          "$other": { ".validate": false }
+        }
+      }
+    }
+  }
+}
