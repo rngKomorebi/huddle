@@ -11,3 +11,6 @@ desktop.ini
 
 # Logs
 *.log
+
+# Dependencies (only needed to rebuild styles.css)
+node_modules/

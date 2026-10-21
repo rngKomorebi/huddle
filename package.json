@@ -1,0 +1,13 @@
+{
+  "name": "huddle",
+  "private": true,
+  "description": "Availability poll app. Only the stylesheet has a build step; index.html is served as-is.",
+  "scripts": {
+    "build:css": "tailwindcss -i src/tailwind.css -o styles.css --minify",
+    "watch:css": "tailwindcss -i src/tailwind.css -o styles.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/forms": "0.5.9",
+    "tailwindcss": "3.4.17"
+  }
+}
